@@ -200,15 +200,15 @@ int main(int argc, char *argv[])
     gates_test();
     //return 0;
     shor(15);
-//    if (argc < 2) {
-//        fprintf(stderr, "Usage %s Number\n", argv[0]);
-//        return 1;
-//    }
-//    int n;
-//    if (!sscanf(argv[1], "%d", &n)) {
-//        fprintf(stderr, "%s is not a number\n", argv[1]);
-//        return 1;
-//    }
-//    shor(n);
+    if (argc < 2) {
+        fprintf(stderr, "Usage %s Number\n", argv[0]);
+        return 1;
+    }
+    int n;
+    if (!sscanf(argv[1], "%d", &n)) {
+        fprintf(stderr, "%s is not a number\n", argv[1]);
+        return 1;
+    }
+    shor(n);
 
 }
