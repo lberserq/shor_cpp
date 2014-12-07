@@ -13,29 +13,6 @@ void gates_test() {
     tests::width = 10;
     tests::NotTest();
     tests::CNOTTest();
-    //tests::ToffoliTest();
-    /*Qregister t(2, 1);
-    t.getAmpls()[0] = 1.0f;
-    t.getStates()[0] = 1;
-    ApplyHadamard(t, 0);
-    for (int i = 0; i < t.getSize(); i++) {
-        int st = t.getStates()[i];
-        mcomplex p  = t.getAmpls()[i];
-        double lf = p.real();
-        fprintf(stderr, "%lf %x\n",lf, st);
-    }*/
-//    const int width = 4;
-//    const int N = 100;
-//    Qregister *tmp = new Qregister(width, 2);
-//    ApplyHadamard(*tmp, 0);
-//    fprintf(stderr, "After hadamard\n");
-//    tmp->print();
-//    int i = 0;
-//    Adder *add = new Adder(i, N, width, *tmp);
-//    add->perform();
-//    //tmp->print();
-//    tests::width = 4;
-//    fprintf(stderr, "AUTO_TEST\n");
     tests::AdderTest();
     tests::MulTest();
     tests::QFTTest();
@@ -47,7 +24,7 @@ void gates_test() {
 
 }
 
-int igcd(int a, int b) {
+state igcd(state a, state b) {
     while (a && b) {
         if (a > b) {
              a %= b;
@@ -57,13 +34,13 @@ int igcd(int a, int b) {
     }
     return (a) ? a : b;
 }
-int ipow(int base, int exp) {
-    int res = 1;
+state ipow(state base, int exp) {
+    state res = 1;
     for (int i = 0; i < exp; i++, res *= base);
     return res;
 }
 
-int get_dim(int n) {
+int get_dim(state n) {
     int i = 0;
     while ((1<< i) < n) {
         i++;
@@ -110,15 +87,34 @@ enum
 {
     MAX_TICK_COUNT = 10000
 };
-
+/*!
+ * \brief shor
+ * \param n number to represent
+ *
+ *Algorithm Alloc mem and padding
+ *Apply Uf
+ *Apply QFT
+ *Measure First reg
+ *approximate mes_val / (1 << width) with elementary partition
+ *use denominator as a period
+ *
+ */
 
 void shor(int n) {
     int all_width = get_dim(n * n);
     int width_local = get_dim(n);
+    printf("Factorization of %d\n", n);
     fprintf(stderr, "w %d sw %d\n", all_width, width_local);
     int local_variables_size = 3 * width_local + 2;
+    printf("We need %d qbits\n", all_width + 3 * width_local);
+    if (all_width + 3 * width_local > 63) {
+        printf("Too big number\n");
+        return;
+    }
     state m_state;
     int tick_count = 0;
+
+
     while (tick_count < MAX_TICK_COUNT) {
         Qregister *tmp = new Qregister(all_width, 0);
         for(int i = 0; i < all_width; i++) {
@@ -138,10 +134,7 @@ void shor(int n) {
         fprintf(stdout, "New Round\n RANDOM NUMBER == %d\n", a);
         //Apply Uf
         expamodn(*tmp, n, a, all_width, width_local);
-//        fprintf(stderr, "after expamodn\n");
-//        tmp->print();
-//        return;
-//
+
         //stage1 delete local vars which we used, in Uf
         DeleteLocalVars(*tmp, local_variables_size);
         //stage2 Apply QFT on whole register(because it`s simplier, than use *** paddings)
@@ -199,7 +192,8 @@ int main(int argc, char *argv[])
 {
     gates_test();
     //return 0;
-    shor(15);
+    shor(10);
+    //shor(23 * 89);
     if (argc < 2) {
         fprintf(stderr, "Usage %s Number\n", argv[0]);
         return 1;

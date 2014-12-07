@@ -265,7 +265,7 @@ void ApplyCSWAP(Qregister &reg, int id0, int id1, int id2) {
         state st = reg.getStates()[i];
         int st_id0 = ((st & static_cast<state>(1 << id0)) != 0);
         int st_id1 = ((st & static_cast<state>(1 << id1)) != 0);
-        int st_id2 = ((st & static_cast<state>(1 << id1)) != 0);
+        int st_id2 = ((st & static_cast<state>(1 << id2)) != 0);
         if (st_id0) {
             st = set_bit(st, id1, st_id2);
             st = set_bit(st, id2, st_id1);

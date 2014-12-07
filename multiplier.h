@@ -23,6 +23,7 @@ class Multiplier
     int m_ctlid;
     void mul();
     void mulinv();
+
     void basic_multiplication(int x);
 
 public:
@@ -30,7 +31,7 @@ public:
     Qregister &perform();
 };
 /*!
- *\fnMain part of shor algorithm realize the Uf gate\n
+ *\fn Main part of shor algorithm realize the Uf gate\n
  * calculates x ^ (reg_val) % N\n
  * width_in is a actual width of reg which store reg_val\n
  * local_width -- with of local_variables\n
