@@ -22,7 +22,8 @@ void ApplyCRot(Qregister &reg, int id1, int id2, double alpha)
 {
 
     mcomplex mult = std::exp(mcomplex(0, alpha));
-    for (int i = 0; i < reg.getSize(); i++) {
+    register int sz = reg.getSize();
+    for (int i = 0; i < sz; i++) {
         state st = reg.getStates()[i];
         int id1_bit = ((st & static_cast<state>(1 << id1)) != 0);
         int id2_bit = ((st & static_cast<state>(1 << id2)) != 0);
@@ -66,7 +67,7 @@ void ApplyCnot(Qregister &reg, int id0, int id1) {
 
 
 void ApplyFcnot(Qregister &reg, int id0, int id1) {
-    int sz = reg.getStates().size();
+    register int sz = reg.getStates().size();
     for (int  i = 0; i < sz; i++) {
         state st = (reg.getStates())[i];
         int st_id = (st & static_cast<state>(1 << id0));
@@ -100,7 +101,7 @@ void ApplyToffoli(Qregister &reg, int id0, int id1, int id2) {
 
 void ApplyFToffoli(Qregister &reg, int id0, int id1, int id2)
 {
-    int sz = reg.getStates().size();
+    register int sz = reg.getStates().size();
     for (int i = 0; i < sz; i++){
         state st = (reg.getStates())[i];
         int st_id0 = (st & static_cast<state>(1 << id0));
@@ -119,7 +120,8 @@ void ApplyQbitMatrix(const QMatrix &m, Qregister &reg, int id0)
     std::vector<state> states;
     std::vector<mcomplex> ampls;
     std::map<state, int> used;
-    for (int i = 0; i < reg.getSize(); i++) {
+    register int sz = reg.getSize();
+    for (int i = 0; i < sz; i++) {
         state st = (reg.getStates())[i];
         int stateid0 = ((st & static_cast<state>(1 << id0)) != 0);
         mcomplex cur_ampl = (reg.getAmpls())[i];
@@ -142,7 +144,8 @@ void ApplyQbitMatrix(const QMatrix &m, Qregister &reg, int id0)
 
     std::vector<state> new_states;
     std::vector<mcomplex> new_ampls;
-    for (unsigned i = 0; i < ampls.size(); i++) {
+    sz = ampls.size();
+    for (int i = 0; i < sz; i++) {
         if (std::abs(ampls[i]) > g_eps) {
             new_states.push_back(states[i]);
             new_ampls.push_back(ampls[i]);
@@ -160,7 +163,8 @@ void ApplyDiQbitMatrix(const QMatrix &m, Qregister &reg, int id0,int id1)
     std::vector<state> states;
     std::vector<mcomplex> ampls;
     std::map<state, int> used;
-    for (int i = 0; i < reg.getSize(); i++) {
+    register int sz = reg.getSize();
+    for (int i = 0; i < sz; i++) {
         int st = (reg.getStates())[i];
         int stateid0 = ((st & static_cast<state>(1 << id0)) != 0);
         int stateid1 = ((st & static_cast<state>(1 << id1)) != 0);
@@ -186,7 +190,8 @@ void ApplyDiQbitMatrix(const QMatrix &m, Qregister &reg, int id0,int id1)
     }
     std::vector<state> new_states;
     std::vector<mcomplex> new_ampls;
-    for (unsigned i = 0; i < ampls.size(); i++) {
+    sz = ampls.size();
+    for (int i = 0; i < sz; i++) {
         if (std::abs(ampls[i]) > g_eps) {
             new_states.push_back(states[i]);
             new_ampls.push_back(ampls[i]);
@@ -204,7 +209,8 @@ void ApplyTriQbitMatrix(const QMatrix &m, Qregister &reg, int id0, int id1, int 
     std::vector<state> states;
     std::vector<mcomplex> ampls;
     std::map<state, int> used;
-    for (int i = 0; i < reg.getSize(); i++) {
+    register int sz = reg.getSize();
+    for (int i = 0; i < sz; i++) {
         state st = (reg.getStates())[i];
         int stateid0 = ((st & static_cast<state>(1 << id0)) != 0);
         int stateid1 = ((st & static_cast<state>(1 << id1)) != 0);
@@ -234,7 +240,8 @@ void ApplyTriQbitMatrix(const QMatrix &m, Qregister &reg, int id0, int id1, int 
     }
     std::vector<state> new_states;
     std::vector<mcomplex> new_ampls;
-    for (unsigned i = 0; i < ampls.size(); i++) {
+    sz = ampls.size();
+    for (int i = 0; i < sz; i++) {
         if (std::abs(ampls[i]) > g_eps) {
             new_states.push_back(states[i]);
             new_ampls.push_back(ampls[i]);
@@ -250,7 +257,8 @@ void ApplyTriQbitMatrix(const QMatrix &m, Qregister &reg, int id0, int id1, int 
 
 
 void ApplySWAP(Qregister &reg, int id0, int id1) {
-    for (int i = 0; i < reg.getSize(); i++) {
+    register int sz = reg.getSize();
+    for (int i = 0; i < sz; i++) {
         state st = reg.getStates()[i];
         int st_id0 = ((st & static_cast<state>(1 << id0)) != 0);
         int st_id1 = ((st & static_cast<state>(1 << id1)) != 0);
@@ -261,7 +269,8 @@ void ApplySWAP(Qregister &reg, int id0, int id1) {
 }
 
 void ApplyCSWAP(Qregister &reg, int id0, int id1, int id2) {
-    for (int i = 0; i < reg.getSize(); i++) {
+    register int sz = reg.getSize();
+    for (int i = 0; i < sz; i++) {
         state st = reg.getStates()[i];
         int st_id0 = ((st & static_cast<state>(1 << id0)) != 0);
         int st_id1 = ((st & static_cast<state>(1 << id1)) != 0);

@@ -38,24 +38,20 @@ void Qregister::alloc_smem(int size)
 
 void Qregister::print()
 {
-    for(unsigned i=0; i< states.size(); i++)
-    {
-        //mcomplex t = ampl[i];
-        float f = std::pow(std::abs(ampl[i]), 2);
-        fprintf(stderr, "%llf + %llfi|%lli> (%e) (|", ampl[i].real(),
-                ampl[i].imag(), states[i],
-                f);
-        for(int j=m_width-1;j>=0;j--)
-        {
-            if(j % 4 == 3)
+    unsigned m_len = states.size();
+    for (unsigned i = 0; i < m_len; i++) {
+        mcomplex amplit = ampl[i];
+        fprintf(stderr, "%llf + i%llf |%llu|", amplit.real(), amplit.imag(), states[i]);
+
+        for (int st = m_width - 1; st >= 0; st--) {
+            int id = ((static_cast<state>(1 << st) & (states[i])) != 0);
+            if (st % 8 == 7) {
                 fprintf(stderr, " ");
-            fprintf(stderr, "%i", ((((state) 1 << j) & states[i]) > 0));
+            }
+            fprintf(stderr, "%i",id);
         }
-
-        fprintf(stderr, ">)\n");
+        fprintf(stderr, "\n");
     }
-
-    fprintf(stderr, "\n");
 }
 
 void Qregister::collapse_state(int id, long double prob_amp)
@@ -63,7 +59,8 @@ void Qregister::collapse_state(int id, long double prob_amp)
     long double sum = 0.0f;
     int size = 0;
     bool flag = std::abs(prob_amp) < g_eps;
-    for (unsigned i = 0; i < states.size(); i++) {
+    unsigned m_len = states.size();
+    for (unsigned i = 0; i < m_len; i++) {
         state st = states[i];
         int state_id1 = ((st & (state)(1 << id)) != 0);
         if (state_id1 == !flag) {
@@ -79,7 +76,8 @@ void Qregister::collapse_state(int id, long double prob_amp)
     m_width--;
 
     int cnt = 0;
-    for(unsigned i=0; i < states.size(); i++)
+    m_len = states.size();
+    for(unsigned i = 0; i < m_len; i++)
     {
         state st = states[i];
         int state_id1 = ((st & (state)(1 << id)) != 0);
@@ -110,7 +108,8 @@ void Qregister::collapse_state(int id, long double prob_amp)
 static void delete_var(Qregister &reg, int id)
 {
     long double probs = 0.0f;
-    for (int i = 0; i < reg.getSize(); i++) {
+    register int m_len = reg.getSize();
+    for (int i = 0; i < m_len; i++) {
         state st = reg.getStates()[i];
         int state_id = ((st & static_cast<state>(1 << id)) != 0);
         if (!state_id) {
@@ -134,13 +133,10 @@ void DeleteLocalVars(Qregister &reg, int size)
     }
 }
 
-void SwapXY(Qregister &reg, int width)
+void SwapXY(Qregister &reg, int width_x)
 {
-    for (int i = 0; i < width / 2; i++) {
-        /*ApplyCnot(reg, i, width - i - 1);
-        ApplyCnot(reg, width - i - 1, i);
-        ApplyCnot(reg, i, width - i - 1);*/
-        ApplySWAP(reg, i, width - i - 1);
+    for (int i = 0; i < width_x / 2; i++) {
+        ApplySWAP(reg, i, width_x - i - 1);
 
     }
 }

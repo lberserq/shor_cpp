@@ -85,6 +85,6 @@ public:
 };
 
 void DeleteLocalVars(Qregister &reg, int size);
-void SwapXY(Qregister &reg, int width);
+void SwapXY(Qregister &reg, int width_x);
 
 #endif // QREGISTER_H
