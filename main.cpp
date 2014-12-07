@@ -7,22 +7,6 @@
 #include "adder.h"
 #include <cstdio>
 #include <cstdlib>
-#include "tests.h"
-void gates_test() {
-
-    tests::width = 10;
-    tests::NotTest();
-    tests::CNOTTest();
-    tests::AdderTest();
-    tests::MulTest();
-    tests::QFTTest();
-    tests::MeasureTest();
-    tests::SwapTest();
-    tests::collapseTest();
-    tests::expTest();
-
-
-}
 
 state igcd(state a, state b) {
     while (a && b) {
@@ -190,9 +174,9 @@ void shor(int n) {
 
 int main(int argc, char *argv[])
 {
-    gates_test();
+    //gates_test();
     //return 0;
-    shor(10);
+    //shor(10);
     //shor(23 * 89);
     if (argc < 2) {
         fprintf(stderr, "Usage %s Number\n", argv[0]);
