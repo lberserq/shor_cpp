@@ -11,11 +11,11 @@ QT       -= gui
 TARGET = quantum_cpp
 CONFIG   += console
 CONFIG   -= app_bundle
-QMAKE_CXXFLAGS += -std=c++11
+QMAKE_CXXFLAGS += -std=c++11 -lquantum -fopenmp -DUSE_NOISE -DFULL_NOISE
 TEMPLATE = app
 
-QMAKE_INCDIR += /home/lberserq/tmp/libq/libquantum-1.1.1/.libs
-LIBS += /home/lberserq/tmp/libq/libquantum-1.1.1/.libs/libquantum.a
+QMAKE_INCDIR +=  /home/lberserq/svn/lq/libquantum-1.1.1/.libs/
+LIBS += /home/lberserq/svn/lq/libquantum-1.1.1/.libs/libquantum.a
 QMAKE_LFLAGS += -fopenmp
 
 
@@ -27,7 +27,8 @@ SOURCES += main.cpp \
     multiplier.cpp \
     qft.cpp \
     measure.cpp \
-    tests.cpp
+    tests.cpp \
+    qft_adder.cpp
 
 HEADERS += \
     qregister.h \
@@ -38,4 +39,5 @@ HEADERS += \
     multiplier.h \
     qft.h \
     measure.h \
-    tests.h
+    tests.h \
+    qft_adder.h

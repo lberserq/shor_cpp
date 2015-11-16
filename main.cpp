@@ -1,4 +1,4 @@
-#include "config.h"
+﻿#include "config.h"
 #include "common.h"
 #include "qregister.h"
 #include "qft.h"
@@ -7,11 +7,29 @@
 #include "adder.h"
 #include <cstdio>
 #include <cstdlib>
+#define GT
+#define STATS_ONLY
+
+#ifdef GT
+#include "tests.h"
+void gates_test() {
+    tests::width = 4;
+    tests::HadmardTest();
+    tests::CNOTTest();
+    tests::NotTest();
+    tests::SwapTest();
+    tests::ToffoliTest();
+    tests::AdderTest();
+    tests::MulTest();
+    tests::expTest();
+    tests::QFTTest();
+}
+#endif
 
 state igcd(state a, state b) {
     while (a && b) {
         if (a > b) {
-             a %= b;
+            a %= b;
         } else {
             b %= a;
         }
@@ -25,8 +43,8 @@ state ipow(state base, int exp) {
 }
 
 int get_dim(state n) {
-    int i = 0;
-    while ((1<< i) < n) {
+    state i = 0;
+    while (static_cast<state>(1<< i) < n) {
         i++;
     }
     return i;
@@ -35,7 +53,7 @@ int get_dim(state n) {
 
 
 std::pair<state, state> con_frac_approx(long double val, long double maxdenum) {
-    state numerator = 1, denumerator = 0;
+    long long numerator = 1, denumerator = 0;
     state numlast = 0, denumlast = 1;
     const float interpolation_step = g_eps * 1e4 * 5;
     long double ai = val;
@@ -69,7 +87,7 @@ std::pair<state, state> con_frac_approx(long double val, long double maxdenum) {
 
 enum
 {
-    MAX_TICK_COUNT = 10000
+    MAX_TICK_COUNT = 100
 };
 /*!
  * \brief shor
@@ -84,7 +102,16 @@ enum
  *
  */
 
-void shor(int n) {
+void init_rand() {
+    srand(time(NULL));
+    srand48(time(NULL));
+}
+
+int shor(int n) {
+    init_rand();
+//    if (n == 18) {
+//        n = 17 + 1;
+//    }
     int all_width = get_dim(n * n);
     int width_local = get_dim(n);
     printf("Factorization of %d\n", n);
@@ -93,45 +120,57 @@ void shor(int n) {
     printf("We need %d qbits\n", all_width + 3 * width_local);
     if (all_width + 3 * width_local > 63) {
         printf("Too big number\n");
-        return;
+        return MAX_TICK_COUNT;
     }
     state m_state;
     int tick_count = 0;
 
 
     while (tick_count < MAX_TICK_COUNT) {
+        tick_count++;
         Qregister *tmp = new Qregister(all_width, 0);
         for(int i = 0; i < all_width; i++) {
             ApplyHadamard(*tmp, i);
         }
-       // Alloc mem for Uf
+        // Alloc mem for Uf
+        tmp->printnorm();
         tmp->alloc_smem(local_variables_size);
-
 
         int a = rand() % n;
         while (igcd(a, n) > 1 || a < 2) {
             a = rand() % n;
         }
-        if (n == 20) {
-            a = 17;
-        }
-        fprintf(stdout, "New Round\n RANDOM NUMBER == %d\n", a);
+
+        fprintf(stderr, "New Round %d of %d \n RANDOM NUMBER == %d\n", tick_count, MAX_TICK_COUNT, a);
         //Apply Uf
         expamodn(*tmp, n, a, all_width, width_local);
+        tmp->printnorm();
 
         //stage1 delete local vars which we used, in Uf
         DeleteLocalVars(*tmp, local_variables_size);
         //stage2 Apply QFT on whole register(because it`s simplier, than use *** paddings)
-        QFT::ApplyQft(*tmp, all_width);
-
+        QFT::ApplyQFT(*tmp, all_width);
+        tmp->printnorm();
         //Swap XY because measurer works only with X
         SwapXY(*tmp, all_width);
-
+        tmp->printnorm();
 
         //Measure Y(now in X) with simple Measurer(basis is natural(like |0><0|)
-        m_state = Measurer::Measure(*tmp);
+        //m_state = Measurer::Measure(*tmp);
+
+#ifdef LOGGING
+        log_print();
+        exit(0);
+#endif
+
+#ifdef STATS_ONLY
+        printf("\n States count == %llu, Finished with %llu\n", tmp->getSize(), m_state);
+        tmp->print();
+        tmp->printnorm();
+        return -1;
+#endif
         if (m_state == static_cast<state>(-1)) {
-            std::fprintf(stdout, "Invalid Measurement\n");
+            std::fprintf(stderr, "Invalid Measurement\n");
             delete tmp;
             continue;
         }
@@ -151,33 +190,42 @@ void shor(int n) {
             delete tmp;
             continue;
         }
-        int del0 = ipow(a, frac.second / 2) + 1;
+        delete tmp;
+        state del0 = ipow(a, frac.second / 2) + 1;
 
-        int del1 = del0 - 2; // also == ipow(a, frac.second / 2) - 1;
+        state del1 = del0 - 2; // also == ipow(a, frac.second / 2) - 1;
         del0 = del0 % n;
         del1 = del1 % n;
         int div1 = igcd(n, del0);
         int div2 = igcd(n, del1);
         if (div1 > 1 && div1 != n) {
-            fprintf(stdout, "Lucky round divisors `ve been found %d * %d == %d\n", n / div1, div1, n);
-            return;
+            fprintf(stderr, "Lucky round divisors `ve been found %d * %d == %d\n", n / div1, div1, n);
+            return tick_count;
         } else if (div2 > 1 && div2 != n) {
-            fprintf(stdout, "Lucky round divisors `ve been found %d * %d == %d\n", n / div2, div2, n);
-            return;
+            fprintf(stderr, "Lucky round divisors `ve been found %d * %d == %d\n", n / div2, div2, n);
+            return tick_count;
         } else {
-            fprintf(stdout, "Unlucky round\n");
+            fprintf(stderr, "Unlucky round\n");
         }
 
     }
-    fprintf(stdout, "Cant find divisors with %d iterations, maybe %d is prime ?", MAX_TICK_COUNT, n);
+    fprintf(stderr, "Cant find divisors with %d iterations, maybe %d is prime ?", MAX_TICK_COUNT, n);
+    return tick_count;
+
+}
+
+void test() {
+    srand(0);
+    for (int i = 4;i < 21; i++) {
+        shor(i);
+    }
 }
 
 int main(int argc, char *argv[])
 {
     //gates_test();
     //return 0;
-    //shor(10);
-    //shor(23 * 89);
+
     if (argc < 2) {
         fprintf(stderr, "Usage %s Number\n", argv[0]);
         return 1;
@@ -188,5 +236,8 @@ int main(int argc, char *argv[])
         return 1;
     }
     shor(n);
+    //    freopen("scheme.txt", "w", stderr);
+    //test();
+    return 0;
 
 }

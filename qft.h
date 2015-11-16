@@ -16,7 +16,8 @@ public:
      *| -- CROT(M_PI / 1 << |j - i|)
      */
 
-    static void ApplyQft(Qregister &reg, int reg_width);
+    static void ApplyQFT(Qregister &reg, int reg_width, const std::vector<int> &idx = std::vector<int>());
+    static void ApplyQFTInv(Qregister &reg, int reg_width, const std::vector<int> &idx = std::vector<int>());
 };
 
 #endif // QFT_H

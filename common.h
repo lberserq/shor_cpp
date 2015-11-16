@@ -2,6 +2,17 @@
 #define COMMON_H
 #include "qmatrix.h"
 #include "qregister.h"
+
+
+
+void log_init_reg(int m_w);
+void log_print();
+void log_reinit_reg(int new_mw);
+int set_bit(state x, unsigned char id, int val);
+int getbit(state x, int id);
+extern double errorLevel;
+
+
 /*!
  *\brief this file contains basic gates. Complicated gates in the specified files\n
  */

@@ -1,12 +1,12 @@
 #include "qft_adder.h"
+#include <qft.h>
 
-qft_adder::qft_adder()
-{
+void qft_adder::perform() {
 
+    std::vector<int> idx;
+    for (int i = 0; i < m_width / 2; i++) {
+        idx.push_back(i);
+    }
+    QFT::ApplyQFT(m_reg, m_width, idx);
+    //for (int i = 0; i <)
 }
-
-qft_adder::~qft_adder()
-{
-
-}
-

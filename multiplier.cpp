@@ -3,8 +3,8 @@
 Multiplier::Multiplier(Qregister &in, int N, int width, int a, int ctl_id)
     :m_reg(in),
       m_N(N),
-      m_width(width),
       m_a(a),
+      m_width(width),
       m_ctlid(ctl_id)
 {
 }
@@ -12,9 +12,9 @@ Multiplier::Multiplier(Qregister &in, int N, int width, int a, int ctl_id)
 
 void fix_local_vars(Qregister &in, int var_pin, int width) {
     for (int i = 0; i < width; i++) {
-//        ApplyToffoli(in, var_pin, width + i, 2 * width + 2 + i);
-//        ApplyToffoli(in, var_pin, 2 * width + 2 + i, width + i);
-//        ApplyToffoli(in, var_pin, width + i, 2 * width + 2 + i);
+        //        ApplyToffoli(in, var_pin, width + i, 2 * width + 2 + i);
+        //        ApplyToffoli(in, var_pin, 2 * width + 2 + i, width + i);
+        //        ApplyToffoli(in, var_pin, width + i, 2 * width + 2 + i);
         ApplyCSWAP(in, var_pin, 2 * width + 2 + i, width + i);
     }
 }
@@ -23,8 +23,6 @@ Qregister& Multiplier::perform()
 {
 
     mul();
-    ////reg_swap(m_width, m_reg);
-    ///
     fix_local_vars(m_reg, m_ctlid, m_width);
 
     mulinv();
@@ -61,6 +59,7 @@ void Multiplier::mul()
         Adder *add = new Adder(((1 << i) * m_a) % m_N, m_N, m_width, m_reg);
         m_reg = add->perform();
         delete add;
+
 
         ApplyToffoli(m_reg, m_ctlid, 2 * m_width + 2 + i, tw);
 
@@ -129,6 +128,7 @@ void Multiplier::basic_multiplication(int x) {
 Qregister &expamodn(Qregister &in, int N, int x, int width_in, int local_width)
 {
     ApplyNot(in, 2 * local_width + 2);
+
     for (int i = 0; i < width_in; i++) {
         int pow = x % N;
         for (int j = 1; j < i + 1; j++) {
@@ -137,6 +137,7 @@ Qregister &expamodn(Qregister &in, int N, int x, int width_in, int local_width)
         }
         Multiplier *mp = new Multiplier(in, N, local_width, pow, 3  * local_width + i + 2);
         in = mp->perform();
+        in.printnorm();
         delete mp;
     }
     return in;

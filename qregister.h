@@ -14,6 +14,7 @@ class Qregister
     std::vector<state> states;
     int m_width;
 public:
+    void printnorm();
     /*!
      *\fn Creates the new Qregister with size width and one initial state
      */
@@ -43,15 +44,15 @@ public:
         return ampl;
     }
 
-    const int getSize() const {
-        return states.size();
+    state getSize() const {
+        return ampl.size();
     }
 
     /*!
      *\fn Setter for amplitudes
      */
     void setAmpls(const std::vector<mcomplex> &amp) {
-        ampl = amp;
+        ampl = std::move(amp);
     }
 
     /*!
@@ -72,6 +73,20 @@ public:
      */
 
     void collapse_state(int id, long double prob_amp);
+
+    /*!
+     * \brief shrink_reg
+     * \param new_width new width of register
+     */
+
+    void shrink_reg(int  new_width);
+
+
+    /*!
+     * \brief reg_swap swap parts the register
+     * \param width size of swapped parts
+     * \param in   reg
+     */
 
 
 

@@ -7,12 +7,10 @@
 #include <complex.h>
 #include <ccomplex>
 extern "C" {
-#include <quantum.h>
+    #include <quantum.h>
 }
 #include <cstdio>
-tests::tests()
-{
-}
+
 extern "C"
 {
 void add_mod_n(int N,int a,int width, quantum_reg *reg);
@@ -28,18 +26,12 @@ void quantum_swaptheleads(int width, quantum_reg *reg);
 int tests::width = 4;
 int compare(Qregister *x, quantum_reg *t)
 {
-    if (x->getSize() == t->size && t->width == x->getWidth()) {
-        std::vector<state> xst = x->getStates();
+    if (t->width == x->getWidth()) {
+        std::vector<mcomplex> xst = x->getAmpls();
         for (int i = 0; i < t->size; i++) {
             unsigned p = t->state[i];
-            int found = -1;
-            for (unsigned j = 0; j < xst.size(); j++) {
-                if (xst[j] == p) {
-                    found = j;
-                    break;
-                }
-            }
-            if (found == -1) {
+            bool found =  (std::abs(xst[p]) > g_eps);
+            if (!found) {
                 std::fprintf(stderr, "ERROR cant find state %d\n", p);
                 std::fprintf(stderr, "EXPECTED\n");
                 quantum_print_qureg(*t);
@@ -47,21 +39,8 @@ int compare(Qregister *x, quantum_reg *t)
                 x->print();
                 return 1;
             }
-            /*mcomplex amplt = x->getAmpls()[found];
-            mcomplex amplt2 = mcomplex(quantum_real(t->amplitude[i]), quantum_imag(t->amplitude[i]));
-            if (std::abs(amplt - amplt2) > 0.01) {
-                fprintf(stderr, "Invalid amplitude\n");
-                return 1;
-            }*/
         }
     } else {
-        if (x->getSize() != t->size) {
-            std::fprintf(stderr, "ERROR SIZE ARE NOT EQUAL %d vs %d\n", x->getSize(), t->size);
-            std::fprintf(stderr, "EXPECTED\n");
-            quantum_print_qureg(*t);
-            std::fprintf(stderr, "FOUND\n");
-            x->print();
-        }
         if (t->width != x->getWidth()) {
             std::fprintf(stderr, "ERROR WIDTHS ARE NOT EQUAL %d vs %d\n", x->getWidth(), t->width);
         }
@@ -93,7 +72,7 @@ void tests::AdderTest()
     if (compare(p, &t)) {
         return;
     }
-    /*for (int i = 0; i < (1 << width) + 1; i++) {
+    for (int i = 0; i < (1 << width) + 1; i++) {
         Qregister tmpp = *p;
         quantum_reg tmpt;
         quantum_copy_qureg(&t, &tmpt);
@@ -110,7 +89,7 @@ void tests::AdderTest()
     }
 
     delete p;
-    quantum_delete_qureg(&t);*/
+    quantum_delete_qureg(&t);
     width = 12;
     Qregister *pp = new Qregister(width, 332);
     quantum_reg tt = quantum_new_qureg(332, width);
@@ -126,6 +105,24 @@ void tests::AdderTest()
 
 
 
+void tests::HadmardTest()
+{
+    fprintf(stderr, "Hadamard TEST\n");
+    int pin = 3;
+    Qregister *p = new Qregister(tests::width, 0);
+    quantum_reg t = quantum_new_qureg(0, tests::width);
+    ApplyHadamard(*p, pin);
+    quantum_hadamard(pin, &t);
+    if (compare(p, &t)) {
+        delete p;
+        quantum_delete_qureg(&t);
+        return;
+    }
+    fprintf(stderr, "TEST PASSED\n");
+    delete p;
+    quantum_delete_qureg(&t);
+
+}
 
 
 
@@ -160,7 +157,7 @@ void tests::CNOTTest() {
 void tests::ToffoliTest() {
 
     fprintf(stderr, "TOFFOLITEST\n");
-    const int N = 100;
+    //const int N = 100;
     //const int width = 4;
     Qregister *p = new Qregister(width, 2);
     quantum_reg t = quantum_new_qureg(2, width);
@@ -180,10 +177,10 @@ void tests::ToffoliTest() {
             }
         }
     }
-    Qregister *tmp1 = new Qregister(12, 364);
-    quantum_reg tmp2 = quantum_new_qureg(364, 12);
-    quantum_toffoli(8, 7, 5, &tmp2);
-    ApplyToffoli(*tmp1, 8, 7, 5);
+    Qregister *tmp1 = new Qregister(12, 7);
+    quantum_reg tmp2 = quantum_new_qureg(7, 12);
+    quantum_toffoli(2, 1, 0, &tmp2);
+    ApplyToffoli(*tmp1, 2, 1, 0);
     if (compare(tmp1, &tmp2)) {
         return;
     }
@@ -227,7 +224,7 @@ void tests::SwapTest()
     apply_walsh(*p);
 
     quantum_walsh(width, &t);
-    QFT::ApplyQft(*p, width);
+    QFT::ApplyQFT(*p, width);
     quantum_qft(width, &t);
     quantum_swaptheleads(width, &t);
     reg_swap(width, *p);
@@ -363,7 +360,7 @@ void tests::expTest() {
     DeleteLocalVars(*p, 3 * swidth + 2);
 
     quantum_qft(width, &t);
-    QFT::ApplyQft(*p, width);
+    QFT::ApplyQFT(*p, width);
     if (compare(p, &t)) {
         return;
     }
@@ -435,15 +432,18 @@ void tests::collapseTest() {
 void tests::QFTTest() {
     fprintf(stderr, "QFTTEST\n");
     //const int width = 4;
-    width = 5;
+    width = 3;
     Qregister *p = new Qregister(width, 2);
+    ApplyToffoli(*p, 0, 1, 2);
+    log_print();
     quantum_reg t = quantum_new_qureg(2, width);
     apply_walsh(*p);
+    log_print();
     quantum_walsh(width, &t);
     if (compare(p, &t)) {
         return;
     }
-    QFT::ApplyQft(*p, width);
+    QFT::ApplyQFT(*p, width);
     quantum_qft(width, &t);
     if (compare(p, &t)) {
         return;
@@ -465,7 +465,7 @@ void tests::MeasureTest() {
     if (compare(p, &t)) {
         return;
     }
-    QFT::ApplyQft(*p, width);
+    QFT::ApplyQFT(*p, width);
     quantum_qft(width, &t);
     if (compare(p, &t)) {
         return;

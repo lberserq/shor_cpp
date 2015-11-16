@@ -23,7 +23,9 @@ Adder::Adder(int a, int n, int width, Qregister &in):
 Qregister & Adder::perform()
 {
     addition_n();
+
     addition_inv(); // disentangle with ancill
+
     return m_reg;
 }
 
