@@ -9,7 +9,7 @@
 class Measurer
 {
 public:
-    static state Measure(Qregister &reg);
+    static state Measure(IQRegister &reg);
 };
 
 #endif // MEASURE_H

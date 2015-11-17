@@ -12,4 +12,13 @@ typedef std::complex<long double> mcomplex;
 #include <stdlib.h>
 #include <stdio.h>
 
+#define EKA_DECLARE_IID(x)\
+    int __eka__id = x;\
+
+#ifdef _MSC_VER
+typedef  unsigned int result_t;
+#else
+typedef  unsigned result_t;
+#endif
+
 #endif // CONFIG_H

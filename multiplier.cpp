@@ -1,6 +1,6 @@
 #include "multiplier.h"
 #include "adder.h"
-Multiplier::Multiplier(Qregister &in, int N, int width, int a, int ctl_id)
+Multiplier::Multiplier(IQRegister &in, int N, int width, int a, int ctl_id)
     :m_reg(in),
       m_N(N),
       m_a(a),
@@ -10,7 +10,7 @@ Multiplier::Multiplier(Qregister &in, int N, int width, int a, int ctl_id)
 }
 
 
-void fix_local_vars(Qregister &in, int var_pin, int width) {
+void fix_local_vars(IQRegister &in, int var_pin, int width) {
     for (int i = 0; i < width; i++) {
         //        ApplyToffoli(in, var_pin, width + i, 2 * width + 2 + i);
         //        ApplyToffoli(in, var_pin, 2 * width + 2 + i, width + i);
@@ -19,7 +19,7 @@ void fix_local_vars(Qregister &in, int var_pin, int width) {
     }
 }
 
-Qregister& Multiplier::perform()
+IQRegister& Multiplier::perform()
 {
 
     mul();
@@ -125,7 +125,7 @@ void Multiplier::basic_multiplication(int x) {
 
 
 
-Qregister &expamodn(Qregister &in, int N, int x, int width_in, int local_width)
+IQRegister &expamodn(IQRegister &in, int N, int x, int width_in, int local_width)
 {
     ApplyNot(in, 2 * local_width + 2);
 
@@ -137,7 +137,7 @@ Qregister &expamodn(Qregister &in, int N, int x, int width_in, int local_width)
         }
         Multiplier *mp = new Multiplier(in, N, local_width, pow, 3  * local_width + i + 2);
         in = mp->perform();
-        in.printnorm();
+        in.printNorm();
         delete mp;
     }
     return in;

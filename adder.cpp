@@ -11,7 +11,7 @@
  * \param in
  *adds a to register by modulo n
  */
-Adder::Adder(int a, int n, int width, Qregister &in):
+Adder::Adder(int a, int n, int width, IQRegister &in):
     m_N(n),
     m_a(a),
     m_reg(in),
@@ -20,7 +20,7 @@ Adder::Adder(int a, int n, int width, Qregister &in):
 {
 }
 
-Qregister & Adder::perform()
+IQRegister & Adder::perform()
 {
     addition_n();
 
@@ -41,7 +41,7 @@ void Adder::addition_inv()
 {
     ApplyCnot(m_reg, 2 * m_width + 1, 2 * m_width);
     gate_add_inv((1 << m_width) - m_a,  m_N - m_a);
-    reg_swap(m_width, m_reg);
+    RegSwapLR(m_width, m_reg);
     find_xlt(m_a);
 }
 
