@@ -325,10 +325,13 @@ void ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
     int m_w = reg.getWidth();
     //int local_id0 = m_w - id0 - 1;
     int local_id0 = id0;
-    //#pragma omp parallel for schedule(static)
+    if (local_id0 >= reg.getWidth()) {
+        throw std::invalid_argument("Invalid id for OneQBitOp");
+    }
+#pragma omp parallel for schedule(static)
     for (state i = 0; i < st_sz; i++) {
-        int id_curr = get_bit(i, local_id0);
-        ampls[i] = resm(id_curr, 0) * reg.getStates()[set_bit(i, id0, 0)] + resm(id_curr, 1) * reg.getStates()[set_bit(i, id0, 1)];
+        int s_id = get_bit(i, local_id0);
+        ampls[i] = resm(s_id, 0) * reg.getStates()[set_bit(i, id0, 0)] + resm(s_id, 1) * reg.getStates()[set_bit(i, id0, 1)];
     }
     reg.setStates(ampls);
 }
@@ -352,7 +355,12 @@ void ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0,int id1)
     //    int local_id0 = m_w - id0 - 1, local_id1 = m_w - id1 - 1;
     int local_id0 = id0;
     int local_id1 = id1;
-    //#pragma omp parallel for schedule(static)
+
+    if (local_id0 >= reg.getWidth()
+            || local_id1 >= reg.getWidth()) {
+        throw std::invalid_argument("Invalid id for DiQBitOp");
+    }
+#pragma omp parallel for schedule(static)
     for (state i = 0; i < st_sz; i++) {
         int id_curr0 = get_bit(i, local_id0);
         int id_curr1 = get_bit(i, local_id1);
@@ -392,6 +400,11 @@ void ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1, int
     int local_id0 = id0;
     int local_id1 = id1;
     int local_id2 = id2;
+    if (local_id0 >= reg.getWidth()
+            || local_id1 >= reg.getWidth()
+            || local_id2 >= reg.getWidth()) {
+        throw std::invalid_argument("Invalid id for TriQBitOp");
+    }
     #pragma omp parallel for schedule(static)
     for (state i = 0; i < st_sz; i++) {
         int id_curr0 = get_bit(i, local_id0);

@@ -62,43 +62,43 @@ void apply_walsh(IQRegister &reg)
 void tests::AdderTest()
 {
     fprintf(stderr, "ADDER TEST\n");
-//    const int N = 100;
-//    width = 4;
-//    //const int width = 4;
-//    IQRegister *p = new StaticQRegister(width, 2);
-//    quantum_reg t = quantum_new_qureg(2, width);
-//    apply_walsh(*p);
-//    quantum_walsh(width, &t);
-//    if (compare(p, &t)) {
-//        return;
-//    }
-//    for (int i = 0; i < (1 << width) + 1; i++) {
-//        IQRegister tmpp = *p;
-//        quantum_reg tmpt;
-//        quantum_copy_qureg(&t, &tmpt);
-//        Adder *adder = new Adder(i, N, width, tmpp);
-//        adder->perform();
-//        add_mod_n(N, i, width, &tmpt);
-//        if (compare(p, &t)) {
-//            fprintf(stderr, "%d\n", i);
-//            return;
-//        }
+    const int N = 100;
+    width = 4;
+    //const int width = 4;
+    IQRegister *p = new StaticQRegister(2 * width + 2, 2);
+    quantum_reg t = quantum_new_qureg(2, 2 * width + 2);
+    apply_walsh(*p);
+    quantum_walsh(width, &t);
+    if (compare(p, &t)) {
+        return;
+    }
+    for (int i = 0; i < (1 << width) + 1; i++) {
+        StaticQRegister tmpp = * dynamic_cast<StaticQRegister *>(p);
+        quantum_reg tmpt;
+        quantum_copy_qureg(&t, &tmpt);
+        Adder *adder = new Adder(i, N, width, tmpp);
+        adder->perform();
+        add_mod_n(N, i, width, &tmpt);
+        if (compare(p, &t)) {
+            fprintf(stderr, "%d\n", i);
+            return;
+        }
 
-//        fprintf(stderr, "%d\n", i);
-//        delete adder;
-//    }
+        fprintf(stderr, "%d\n", i);
+        delete adder;
+    }
 
-//    delete p;
-//    quantum_delete_qureg(&t);
-//    width = 12;
-//    IQRegister *pp = new StaticQRegister(width, 332);
-//    quantum_reg tt = quantum_new_qureg(332, width);
-//    Adder *addt = new Adder(6, 8, 2, *pp);
-//    add_mod_n(8, 6, 2, &tt);
-//    addt->perform();
-//    if (compare(pp, &tt)) {
-//        return;
-//    }
+    delete p;
+    quantum_delete_qureg(&t);
+    width = 12;
+    IQRegister *pp = new StaticQRegister(width, 332);
+    quantum_reg tt = quantum_new_qureg(332, width);
+    Adder *addt = new Adder(6, 8, 2, *pp);
+    add_mod_n(8, 6, 2, &tt);
+    addt->perform();
+    if (compare(pp, &tt)) {
+        return;
+    }
 
     fprintf(stderr, "TEST PASSED\n");
 }
@@ -219,8 +219,8 @@ void tests::SwapTest()
 {
     fprintf(stderr, "SWAP_TEST\n");
     width =  4;
-    IQRegister *p = new StaticQRegister(width, 0);
-    quantum_reg t = quantum_new_qureg(0, width);
+    IQRegister *p = new StaticQRegister(2 * width, 0);
+    quantum_reg t = quantum_new_qureg(0, width * 2);
     apply_walsh(*p);
 
     quantum_walsh(width, &t);

@@ -407,6 +407,9 @@ void SwapXY(IQRegister &reg, int width)
 
 void RegSwapLR(int width, IQRegister &in)
 {
+    if (width > in.getWidth() / 2) {
+        throw std::invalid_argument("Invalid width for RegSwapLR");
+    }
     /*for (int i = 0; i < in.getSize(); i++) {
         state cur_state = (in.getStates())[i];
         state left = cur_state & (1 << width);
@@ -438,7 +441,7 @@ void RegSwapLR(int width, IQRegister &in)
     }
 
     in.getStates().clear();
-    in.getStates().resize(1 << 2 * in.getWidth());
+    in.getStates().resize(m_sz);
     m_sz = news.size();
 
     for (state i = 0; i < m_sz; i++) {

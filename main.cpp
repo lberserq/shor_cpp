@@ -13,13 +13,13 @@
 #ifdef GT
 #include "tests.h"
 void gates_test() {
-//    tests::width = 4;
-//    tests::HadmardTest();
-//    tests::CNOTTest();
-//    tests::NotTest();
-//    tests::SwapTest();
-//    tests::ToffoliTest();
-//    tests::AdderTest();
+    tests::width = 4;
+    tests::HadmardTest();
+    tests::CNOTTest();
+    tests::NotTest();
+    tests::SwapTest();
+    tests::ToffoliTest();
+    tests::AdderTest();
     tests::MulTest();
     tests::expTest();
     tests::QFTTest();

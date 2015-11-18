@@ -21,4 +21,6 @@ typedef  unsigned int result_t;
 typedef  unsigned result_t;
 #endif
 
+#include <stdexcept>
+
 #endif // CONFIG_H
