@@ -9,7 +9,7 @@ QFT::QFT()
 
 #define ind_trans(i) (use_idx  ? idx[i] : i)
 
-void QFT::ApplyQFT(IQRegister &reg, int reg_width, const std::vector<int> &idx)
+void QFT::ApplyQFT(Qregister &reg, int reg_width, const std::vector<int> &idx)
 {
     bool use_idx = (idx.size() > 0);
     int st_val = (use_idx) ? idx.size() - 1 : reg_width - 1;
@@ -25,7 +25,7 @@ void QFT::ApplyQFT(IQRegister &reg, int reg_width, const std::vector<int> &idx)
 }
 
 
-void QFT::ApplyQFTInv(IQRegister &reg, int reg_width, const std::vector<int> &idx)
+void QFT::ApplyQFTInv(Qregister &reg, int reg_width, const std::vector<int> &idx)
 {
     bool use_idx = (idx.size() > 0);
     int st_val = (use_idx) ? idx.size() - 1 : reg_width - 1;

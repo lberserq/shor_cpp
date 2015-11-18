@@ -163,7 +163,7 @@ int set_bit(state x, unsigned char id, int val) {
     return x;
 }
 
-void ApplyCRot(IQRegister &reg, int id1, int id2, double alpha)
+void ApplyCRot(Qregister &reg, int id1, int id2, double alpha)
 {
     std::set<int> m_s; m_s.insert(id1); m_s.insert(id2); log_str(m_s);
 
@@ -176,7 +176,7 @@ void ApplyCRot(IQRegister &reg, int id1, int id2, double alpha)
 }
 
 
-void ApplyHadamard(IQRegister &reg, int id1)
+void ApplyHadamard(Qregister &reg, int id1)
 {
     QMatrix m(2, 2);
     for (int i = 0 ; i < 2; i++) {
@@ -188,7 +188,7 @@ void ApplyHadamard(IQRegister &reg, int id1)
     ApplyQbitMatrix(m, reg, id1);
 }
 
-void ApplyNot(IQRegister &reg, int id) {
+void ApplyNot(Qregister &reg, int id) {
     QMatrix m(2, 2);
     m(0, 0) = m(1, 1) = mcomplex(0, 0);
     m(1, 0) = m(0, 1) = mcomplex(1, 0);
@@ -196,7 +196,7 @@ void ApplyNot(IQRegister &reg, int id) {
 }
 
 //naive realization not fast at all
-void ApplyCnot(IQRegister &reg, int id0, int id1) {
+void ApplyCnot(Qregister &reg, int id0, int id1) {
     QMatrix m(4, 4);
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
@@ -208,7 +208,7 @@ void ApplyCnot(IQRegister &reg, int id0, int id1) {
 }
 
 
-void ApplyFcnot(IQRegister &reg, int id0, int id1) {
+void ApplyFcnot(Qregister &reg, int id0, int id1) {
     //    int sz = reg.getStates().size();
     //    for (int  i = 0; i < sz; i++) {
     //        state st = (reg.getStates())[i];
@@ -277,7 +277,7 @@ QMatrix genNoise(int w) {
 
 
 //naive realization not fast at all
-void ApplyToffoli(IQRegister &reg, int id0, int id1, int id2) {
+void ApplyToffoli(Qregister &reg, int id0, int id1, int id2) {
     QMatrix m(8, 8);
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
@@ -294,7 +294,7 @@ void ApplyToffoli(IQRegister &reg, int id0, int id1, int id2) {
 
 
 
-void ApplyFToffoli(IQRegister &reg, int id0, int id1, int id2)
+void ApplyFToffoli(Qregister &reg, int id0, int id1, int id2)
 {
     //    int sz = reg.getStates().size();
     //    for (int i = 0; i < sz; i++){
@@ -310,7 +310,7 @@ void ApplyFToffoli(IQRegister &reg, int id0, int id1, int id2)
 }
 
 
-void ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
+void ApplyQbitMatrix(const QMatrix &m, Qregister &reg, int id0)
 {
     QMatrix resm = m;
 #ifdef USE_NOISE
@@ -320,21 +320,21 @@ void ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
     std::set<int> m_s; m_s.insert(id0); log_str(m_s);
 #endif
     std::vector<mcomplex> ampls;
-    ampls.resize(reg.getStates().size());
-    state st_sz = reg.getStatesSize();
+    ampls.resize(reg.getAmpls().size());
+    state st_sz = reg.getSize();
     int m_w = reg.getWidth();
     //int local_id0 = m_w - id0 - 1;
     int local_id0 = id0;
     //#pragma omp parallel for schedule(static)
     for (state i = 0; i < st_sz; i++) {
         int id_curr = get_bit(i, local_id0);
-        ampls[i] = resm(id_curr, 0) * reg.getStates()[set_bit(i, id0, 0)] + resm(id_curr, 1) * reg.getStates()[set_bit(i, id0, 1)];
+        ampls[i] = resm(id_curr, 0) * reg.getAmpls()[set_bit(i, id0, 0)] + resm(id_curr, 1) * reg.getAmpls()[set_bit(i, id0, 1)];
     }
-    reg.setStates(ampls);
+    reg.setAmpls(ampls);
 }
 
 
-void ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0,int id1)
+void ApplyDiQbitMatrix(const QMatrix &m, Qregister &reg, int id0,int id1)
 {
     QMatrix resm = m;
 #ifdef FULL_NOISE
@@ -346,8 +346,8 @@ void ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0,int id1)
 #endif
 
     std::vector<mcomplex> ampls;
-    ampls.resize(reg.getStates().size());
-    state st_sz = reg.getStatesSize();
+    ampls.resize(reg.getAmpls().size());
+    state st_sz = reg.getSize();
     //    int m_w = reg.getWidth();
     //    int local_id0 = m_w - id0 - 1, local_id1 = m_w - id1 - 1;
     int local_id0 = id0;
@@ -361,17 +361,17 @@ void ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0,int id1)
             for (int k = 0; k < 2; k++) {
                 int s_id = set_bit(i, local_id0, j);
                 s_id = set_bit(s_id, local_id1, k);
-                ampl += resm(j * 2 + k, id_curr0 * 2 + id_curr1) * reg.getStates()[s_id];
+                ampl += resm(j * 2 + k, id_curr0 * 2 + id_curr1) * reg.getAmpls()[s_id];
             }
         }
         ampls[i] = ampl;
     }
-    reg.setStates(ampls);
+    reg.setAmpls(ampls);
 
 }
 
 
-void ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1, int id2)
+void ApplyTriQbitMatrix(const QMatrix &m, Qregister &reg, int id0, int id1, int id2)
 {
     QMatrix resm = m;
 #ifdef FULL_NOISE
@@ -383,8 +383,8 @@ void ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1, int
 #endif
 
     std::vector<mcomplex> ampls;
-    ampls.resize(reg.getStates().size());
-    state st_sz = reg.getStatesSize();
+    ampls.resize(reg.getAmpls().size());
+    state st_sz = reg.getSize();
     //    int m_w = reg.getWidth();
     //    int local_id0 = m_w - id0 - 1;
     //    int local_id1 = m_w - id1 - 1;
@@ -404,20 +404,20 @@ void ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1, int
                     int s_id = set_bit(i, local_id0, j);
                     s_id = set_bit(s_id, local_id1, k);
                     s_id = set_bit(s_id, local_id2, p);
-                    ampl += resm(j * 4 + k * 2 + p, id_curr0 * 4 + id_curr1 * 2 + id_curr2) * reg.getStates()[s_id];
+                    ampl += resm(j * 4 + k * 2 + p, id_curr0 * 4 + id_curr1 * 2 + id_curr2) * reg.getAmpls()[s_id];
                 }
             }
         }
         ampls[i] = ampl;
     }
-    reg.setStates(ampls);
+    reg.setAmpls(ampls);
 
 }
 
 
 
 
-void ApplySWAP(IQRegister &reg, int id0, int id1) {
+void ApplySWAP(Qregister &reg, int id0, int id1) {
 
     QMatrix m(4, 4);
     for (int i = 0; i < 4; i++) {
@@ -431,7 +431,7 @@ void ApplySWAP(IQRegister &reg, int id0, int id1) {
     ApplyDiQbitMatrix(m, reg, id0, id1);
 
     //    std::set<int> m_s; m_s.insert(id0); m_s.insert(id1);log_str(m_s, 'S');
-    //    for (int i = 0; i < reg.getStatesSize(); i++) {
+    //    for (int i = 0; i < reg.getSize(); i++) {
     //        state st = reg.getStates()[i];
     //        int st_id0 = ((st & static_cast<state>(1 << id0)) != 0);
     //        int st_id1 = ((st & static_cast<state>(1 << id1)) != 0);
@@ -442,7 +442,7 @@ void ApplySWAP(IQRegister &reg, int id0, int id1) {
 
 }
 
-void ApplyCSWAP(IQRegister &reg, int id0, int id1, int id2) {
+void ApplyCSWAP(Qregister &reg, int id0, int id1, int id2) {
 
     QMatrix m(8, 8);
     for (int i = 0; i < 8; i++) {
@@ -456,7 +456,7 @@ void ApplyCSWAP(IQRegister &reg, int id0, int id1, int id2) {
     ApplyTriQbitMatrix(m, reg, id0, id1, id2);
 
     //    std::set<int> m_s; m_s.insert(id0); m_s.insert(id1); m_s.insert(id2); log_str(m_s, 'C');
-    //    for (int i = 0; i < reg.getStatesSize(); i++) {
+    //    for (int i = 0; i < reg.getSize(); i++) {
     //        state st = reg.getStates()[i];
     //        int st_id0 = ((st & static_cast<state>(1 << id0)) != 0);
     //        int st_id1 = ((st & static_cast<state>(1 << id1)) != 0);

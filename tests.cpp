@@ -24,13 +24,13 @@ void quantum_swaptheleads(int width, quantum_reg *reg);
 
 
 int tests::width = 4;
-int compare(IQRegister *x, quantum_reg *t)
+int compare(Qregister *x, quantum_reg *t)
 {
     if (t->width == x->getWidth()) {
-        std::vector<mcomplex> xst = x->getStates();
+        std::vector<mcomplex> xst = x->getAmpls();
         for (int i = 0; i < t->size; i++) {
             unsigned p = t->state[i];
-            bool found =  (p < xst.size() && std::abs(xst[p]) > g_eps);
+            bool found =  (std::abs(xst[p]) > g_eps);
             if (!found) {
                 std::fprintf(stderr, "ERROR cant find state %d\n", p);
                 std::fprintf(stderr, "EXPECTED\n");
@@ -51,7 +51,7 @@ int compare(IQRegister *x, quantum_reg *t)
 }
 
 
-void apply_walsh(IQRegister &reg)
+void apply_walsh(Qregister &reg)
 {
     for (int i = 0; i <reg.getWidth(); i++) {
         ApplyHadamard(reg, i);
@@ -62,43 +62,43 @@ void apply_walsh(IQRegister &reg)
 void tests::AdderTest()
 {
     fprintf(stderr, "ADDER TEST\n");
-//    const int N = 100;
-//    width = 4;
-//    //const int width = 4;
-//    IQRegister *p = new StaticQRegister(width, 2);
-//    quantum_reg t = quantum_new_qureg(2, width);
-//    apply_walsh(*p);
-//    quantum_walsh(width, &t);
-//    if (compare(p, &t)) {
-//        return;
-//    }
-//    for (int i = 0; i < (1 << width) + 1; i++) {
-//        IQRegister tmpp = *p;
-//        quantum_reg tmpt;
-//        quantum_copy_qureg(&t, &tmpt);
-//        Adder *adder = new Adder(i, N, width, tmpp);
-//        adder->perform();
-//        add_mod_n(N, i, width, &tmpt);
-//        if (compare(p, &t)) {
-//            fprintf(stderr, "%d\n", i);
-//            return;
-//        }
+    const int N = 100;
+    width = 4;
+    //const int width = 4;
+    Qregister *p = new Qregister(width, 2);
+    quantum_reg t = quantum_new_qureg(2, width);
+    apply_walsh(*p);
+    quantum_walsh(width, &t);
+    if (compare(p, &t)) {
+        return;
+    }
+    for (int i = 0; i < (1 << width) + 1; i++) {
+        Qregister tmpp = *p;
+        quantum_reg tmpt;
+        quantum_copy_qureg(&t, &tmpt);
+        Adder *adder = new Adder(i, N, width, tmpp);
+        adder->perform();
+        add_mod_n(N, i, width, &tmpt);
+        if (compare(p, &t)) {
+            fprintf(stderr, "%d\n", i);
+            return;
+        }
 
-//        fprintf(stderr, "%d\n", i);
-//        delete adder;
-//    }
+        fprintf(stderr, "%d\n", i);
+        delete adder;
+    }
 
-//    delete p;
-//    quantum_delete_qureg(&t);
-//    width = 12;
-//    IQRegister *pp = new StaticQRegister(width, 332);
-//    quantum_reg tt = quantum_new_qureg(332, width);
-//    Adder *addt = new Adder(6, 8, 2, *pp);
-//    add_mod_n(8, 6, 2, &tt);
-//    addt->perform();
-//    if (compare(pp, &tt)) {
-//        return;
-//    }
+    delete p;
+    quantum_delete_qureg(&t);
+    width = 12;
+    Qregister *pp = new Qregister(width, 332);
+    quantum_reg tt = quantum_new_qureg(332, width);
+    Adder *addt = new Adder(6, 8, 2, *pp);
+    add_mod_n(8, 6, 2, &tt);
+    addt->perform();
+    if (compare(pp, &tt)) {
+        return;
+    }
 
     fprintf(stderr, "TEST PASSED\n");
 }
@@ -109,7 +109,7 @@ void tests::HadmardTest()
 {
     fprintf(stderr, "Hadamard TEST\n");
     int pin = 3;
-    IQRegister *p = new StaticQRegister(tests::width, 0);
+    Qregister *p = new Qregister(tests::width, 0);
     quantum_reg t = quantum_new_qureg(0, tests::width);
     ApplyHadamard(*p, pin);
     quantum_hadamard(pin, &t);
@@ -131,7 +131,7 @@ void tests::CNOTTest() {
     fprintf(stderr, "CNOT TEST\n");
     const int N = 100;
     //const int width = 4;
-    IQRegister *p = new StaticQRegister(width, 2);
+    Qregister *p = new Qregister(width, 2);
     quantum_reg t = quantum_new_qureg(2, width);
     apply_walsh(*p);
     quantum_walsh(width, &t);
@@ -159,7 +159,7 @@ void tests::ToffoliTest() {
     fprintf(stderr, "TOFFOLITEST\n");
     //const int N = 100;
     //const int width = 4;
-    IQRegister *p = new StaticQRegister(width, 2);
+    Qregister *p = new Qregister(width, 2);
     quantum_reg t = quantum_new_qureg(2, width);
     apply_walsh(*p);
     quantum_walsh(width, &t);
@@ -177,7 +177,7 @@ void tests::ToffoliTest() {
             }
         }
     }
-    IQRegister *tmp1 = new StaticQRegister(12, 7);
+    Qregister *tmp1 = new Qregister(12, 7);
     quantum_reg tmp2 = quantum_new_qureg(7, 12);
     quantum_toffoli(2, 1, 0, &tmp2);
     ApplyToffoli(*tmp1, 2, 1, 0);
@@ -197,7 +197,7 @@ void tests::ToffoliTest() {
 void tests::NotTest() {
     fprintf(stderr, "NOTTEST\n");
     //const int width = 4;
-    IQRegister *p = new StaticQRegister(width, 2);
+    Qregister *p = new Qregister(width, 2);
     quantum_reg t = quantum_new_qureg(2, width);
     apply_walsh(*p);
     quantum_walsh(width, &t);
@@ -219,7 +219,7 @@ void tests::SwapTest()
 {
     fprintf(stderr, "SWAP_TEST\n");
     width =  4;
-    IQRegister *p = new StaticQRegister(width, 0);
+    Qregister *p = new Qregister(width, 0);
     quantum_reg t = quantum_new_qureg(0, width);
     apply_walsh(*p);
 
@@ -227,7 +227,7 @@ void tests::SwapTest()
     QFT::ApplyQFT(*p, width);
     quantum_qft(width, &t);
     quantum_swaptheleads(width, &t);
-    RegSwapLR(width, *p);
+    reg_swap(width, *p);
     if (compare(p, &t)) {
         return;
     }
@@ -238,7 +238,7 @@ void tests::SwapTest()
 
 
 
-void exp_test_fun(IQRegister *p, quantum_reg *t, int a, int N, int swidth, int width)
+void exp_test_fun(Qregister *p, quantum_reg *t, int a, int N, int swidth, int width)
 {
     ApplyNot(*p, 2 * swidth + 2);
     quantum_sigma_x(2 * swidth + 2, t);
@@ -251,7 +251,7 @@ void exp_test_fun(IQRegister *p, quantum_reg *t, int a, int N, int swidth, int w
             pow *= pow;
             pow %= N;
         }
-        //Multiplier(IQRegister &in, int N, int width, int a, int ctl_id);
+        //Multiplier(Qregister &in, int N, int width, int a, int ctl_id);
         Multiplier *mp = new Multiplier(*p, N, swidth, pow, 3  * swidth + 1 + i);
         *p = mp->perform();
         //mul_mod_n(N,f,3*width+1+i, width, reg);
@@ -271,14 +271,14 @@ void tests::MulTest()
     width = 4;
     int swidth = 2;
     const int ctl_id = 3 * swidth + 2;
-    IQRegister *p = new StaticQRegister(width, 0);
+    Qregister *p = new Qregister(width, 0);
     quantum_reg t = quantum_new_qureg(0, width);
     apply_walsh(*p);
     quantum_walsh(width, &t);
     if (compare(p, &t)) {
         return;
     }
-    p->allocSharedMem(ctl_id);
+    p->alloc_smem(ctl_id);
     quantum_addscratch(ctl_id, &t);
     if (compare(p, &t)) {
         return;
@@ -301,7 +301,7 @@ void tests::MulTest()
     }
 
     /*for (int i = 1; i < N; i++) {
-        IQRegister tmpp = *p;
+        Qregister tmpp = *p;
         quantum_reg tmpt;
         quantum_copy_qureg(&t, &tmpt);
         Multiplier *op = new Multiplier(tmpp, N, width, i, ctl_id);
@@ -329,7 +329,7 @@ void tests::expTest() {
     fprintf(stderr, "EXPAMODN test\n");
     width =  4;
     int swidth = 2;
-    IQRegister *p = new StaticQRegister(width, 0);
+    Qregister *p = new Qregister(width, 0);
     quantum_reg t = quantum_new_qureg(0, width);
     apply_walsh(*p);
     quantum_walsh(width, &t);
@@ -337,7 +337,7 @@ void tests::expTest() {
         return;
     }
     quantum_addscratch(3*swidth+2, &t);
-    p->allocSharedMem(3 * swidth + 2);
+    p->alloc_smem(3 * swidth + 2);
 
     if (compare(p, &t)) {
         return;
@@ -377,13 +377,13 @@ void tests::expTest() {
 
 void tests::collapseTest() {
     fprintf(stderr, "COLLAPSE_TEST\n");
-    IQRegister *p = new StaticQRegister(width, 0);
+    Qregister *p = new Qregister(width, 0);
     quantum_reg t = quantum_new_qureg(0, width);
     apply_walsh(*p);
     quantum_walsh(width, &t);
     int swidth = 6;
     quantum_addscratch(swidth, &t);
-    p->allocSharedMem(swidth);
+    p->alloc_smem(swidth);
 
     quantum_cnot(0, 1, &t);
     ApplyCnot(*p,0, 1);
@@ -405,7 +405,7 @@ void tests::collapseTest() {
     fprintf(stderr, "EXPAMODN test\n");
     width =  4;
     int swidth = 2;
-    IQRegister *p = new StaticQRegister(width, 0);
+    Qregister *p = new Qregister(width, 0);
     quantum_reg t = quantum_new_qureg(0, width);
     apply_walsh(*p);
     quantum_walsh(width, &t);
@@ -433,7 +433,7 @@ void tests::QFTTest() {
     fprintf(stderr, "QFTTEST\n");
     //const int width = 4;
     width = 3;
-    IQRegister *p = new StaticQRegister(width, 2);
+    Qregister *p = new Qregister(width, 2);
     ApplyToffoli(*p, 0, 1, 2);
     log_print();
     quantum_reg t = quantum_new_qureg(2, width);
@@ -458,7 +458,7 @@ void tests::MeasureTest() {
     fprintf(stderr, "MTEST\n");
     //const int width = 4;
     width = 5;
-    IQRegister *p = new StaticQRegister(width, 2);
+    Qregister *p = new Qregister(width, 2);
     quantum_reg t = quantum_new_qureg(2, width);
     apply_walsh(*p);
     quantum_walsh(width, &t);

@@ -19,7 +19,7 @@
 class Adder
 {
     int m_N, m_a;
-    IQRegister &m_reg;
+    Qregister &m_reg;
     int m_width;
     void full_adder(int x, int dest_pin, int carry_in, int carry_out, int xlt);
     void full_adder_inv(int x, int dest_pin, int carry_in, int carry_out, int xlt);
@@ -35,8 +35,8 @@ class Adder
     void addition_n();
     void addition_inv();
 public:
-    Adder(int a, int n, int width, IQRegister &in);
-    IQRegister &perform();
+    Adder(int a, int n, int width, Qregister &in);
+    Qregister &perform();
 };
 
 #endif // ADDER_H
