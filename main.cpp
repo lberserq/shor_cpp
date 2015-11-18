@@ -13,13 +13,13 @@
 #ifdef GT
 #include "tests.h"
 void gates_test() {
-    tests::width = 4;
-    tests::HadmardTest();
-    tests::CNOTTest();
-    tests::NotTest();
-    tests::SwapTest();
-    tests::ToffoliTest();
-    tests::AdderTest();
+//    tests::width = 4;
+//    tests::HadmardTest();
+//    tests::CNOTTest();
+//    tests::NotTest();
+//    tests::SwapTest();
+//    tests::ToffoliTest();
+//    tests::AdderTest();
     tests::MulTest();
     tests::expTest();
     tests::QFTTest();
@@ -128,13 +128,13 @@ int shor(int n) {
 
     while (tick_count < MAX_TICK_COUNT) {
         tick_count++;
-        Qregister *tmp = new Qregister(all_width, 0);
+        IQRegister *tmp = new StaticQRegister(all_width, 0);
         for(int i = 0; i < all_width; i++) {
             ApplyHadamard(*tmp, i);
         }
         // Alloc mem for Uf
-        tmp->printnorm();
-        tmp->alloc_smem(local_variables_size);
+        tmp->printNorm();
+        tmp->allocSharedMem(local_variables_size);
 
         int a = rand() % n;
         while (igcd(a, n) > 1 || a < 2) {
@@ -144,16 +144,16 @@ int shor(int n) {
         fprintf(stderr, "New Round %d of %d \n RANDOM NUMBER == %d\n", tick_count, MAX_TICK_COUNT, a);
         //Apply Uf
         expamodn(*tmp, n, a, all_width, width_local);
-        tmp->printnorm();
+        tmp->printNorm();
 
         //stage1 delete local vars which we used, in Uf
         DeleteLocalVars(*tmp, local_variables_size);
         //stage2 Apply QFT on whole register(because it`s simplier, than use *** paddings)
         QFT::ApplyQFT(*tmp, all_width);
-        tmp->printnorm();
+        tmp->printNorm();
         //Swap XY because measurer works only with X
         SwapXY(*tmp, all_width);
-        tmp->printnorm();
+        tmp->printNorm();
 
         //Measure Y(now in X) with simple Measurer(basis is natural(like |0><0|)
         //m_state = Measurer::Measure(*tmp);
@@ -164,9 +164,9 @@ int shor(int n) {
 #endif
 
 #ifdef STATS_ONLY
-        printf("\n States count == %llu, Finished with %llu\n", tmp->getSize(), m_state);
+        printf("\n States count == %llu, Finished with %llu\n", tmp->getStatesSize(), m_state);
         tmp->print();
-        tmp->printnorm();
+        tmp->printNorm();
         return -1;
 #endif
         if (m_state == static_cast<state>(-1)) {
@@ -223,19 +223,19 @@ void test() {
 
 int main(int argc, char *argv[])
 {
-    //gates_test();
+    gates_test();
     //return 0;
 
-    if (argc < 2) {
-        fprintf(stderr, "Usage %s Number\n", argv[0]);
-        return 1;
-    }
-    int n;
-    if (!sscanf(argv[1], "%d", &n)) {
-        fprintf(stderr, "%s is not a number\n", argv[1]);
-        return 1;
-    }
-    shor(n);
+//    if (argc < 2) {
+//        fprintf(stderr, "Usage %s Number\n", argv[0]);
+//        return 1;
+//    }
+//    int n;
+//    if (!sscanf(argv[1], "%d", &n)) {
+//        fprintf(stderr, "%s is not a number\n", argv[1]);
+//        return 1;
+//    }
+//    shor(n);
     //    freopen("scheme.txt", "w", stderr);
     //test();
     return 0;

@@ -16,7 +16,7 @@
  */
 class Multiplier
 {
-    Qregister &m_reg;
+    IQRegister &m_reg;
     int m_N;
     int m_a;
     int m_width;
@@ -27,8 +27,8 @@ class Multiplier
     void basic_multiplication(int x);
 
 public:
-    Multiplier(Qregister &in, int N, int width, int a, int ctl_id);
-    Qregister &perform();
+    Multiplier(IQRegister &in, int N, int width, int a, int ctl_id);
+    IQRegister &perform();
 };
 /*!
  *\fn Main part of shor algorithm realize the Uf gate\n
@@ -37,6 +37,6 @@ public:
  * local_width -- with of local_variables\n
  * Realized by width_in multiplications
  */
-Qregister &expamodn(Qregister &in, int N, int x, int width_in, int local_width);
+IQRegister &expamodn(IQRegister &in, int N, int x, int width_in, int local_width);
 
 #endif // MULTIPLIER_H
