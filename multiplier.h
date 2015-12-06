@@ -24,7 +24,7 @@ class Multiplier
     void mul();
     void mulinv();
 
-    void basic_multiplication(int x);
+    void BasicMultiplication(int x);
 
 public:
     Multiplier(IQRegister &in, int N, int width, int a, int ctl_id);

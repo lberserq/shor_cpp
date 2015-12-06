@@ -41,7 +41,7 @@ void Adder::addition_inv()
 {
     ApplyCnot(m_reg, 2 * m_width + 1, 2 * m_width);
     gate_add_inv((1 << m_width) - m_a,  m_N - m_a);
-    RegSwapLR(m_width, m_reg);
+    QRegHelpers::RegSwapLR(m_width, m_reg);
     find_xlt(m_a);
 }
 

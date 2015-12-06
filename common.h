@@ -4,13 +4,14 @@
 #include "qregister.h"
 
 
-
 void log_init_reg(int m_w);
 void log_print();
 void log_reinit_reg(int new_mw);
-int set_bit(state x, unsigned char id, int val);
-int getbit(state x, int id);
+//int set_bit(state x, unsigned char id, int val);
+//int getbit(state x, int id);
 extern double errorLevel;
+
+double xGenRand();
 
 
 /*!
@@ -107,5 +108,4 @@ void ApplySWAP(IQRegister &reg, int id0, int id1);
 */
 
 void ApplyCSWAP(IQRegister &reg, int id0, int id1, int id2);
-
 #endif // COMMON_H

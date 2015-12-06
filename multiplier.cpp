@@ -47,7 +47,7 @@ void Multiplier::mul()
 
     ApplyToffoli(m_reg, m_ctlid, 2 * m_width + 2, tw);
 
-    basic_multiplication(m_a % m_N);
+    BasicMultiplication(m_a % m_N);
 
     ApplyToffoli(m_reg, m_ctlid, 2 * m_width + 2, tw);
 
@@ -103,7 +103,7 @@ void Multiplier::mulinv()
 
     ApplyToffoli(m_reg, m_ctlid, 2 * m_width + 2, tw);
 
-    basic_multiplication(m_a % m_N);
+    BasicMultiplication(m_a % m_N);
 
     ApplyToffoli(m_reg, m_ctlid, 2 * m_width + 2, tw);
 }
@@ -113,7 +113,7 @@ void Multiplier::mulinv()
  *  m_width + i qbit contains m_reg(first width qbits) * (1 << i)
  *
  */
-void Multiplier::basic_multiplication(int x) {
+void Multiplier::BasicMultiplication(int x) {
     int tw = 2 * m_width + 1;
 
     for (int i = m_width - 1; i >= 0; i--) {

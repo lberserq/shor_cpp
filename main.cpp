@@ -12,8 +12,19 @@
 
 #ifdef GT
 #include "tests.h"
+
+int test2() {
+    IQRegister *tmp = new SharedQSimpleQRegister(4, 2);
+    for (int i = 0;i < 4; i++) {
+        ApplyHadamard(*tmp, i);
+    }
+    QRegHelpers::RegSwapLR(1, *tmp);
+    return -1;
+
+}
+
 void gates_test() {
-    tests::width = 4;
+    tests::width = 3;
     tests::HadmardTest();
     tests::CNOTTest();
     tests::NotTest();
@@ -23,6 +34,8 @@ void gates_test() {
     tests::MulTest();
     tests::expTest();
     tests::QFTTest();
+    tests::MeasureTest();
+    tests::fake_test();
 }
 #endif
 
@@ -55,7 +68,7 @@ int get_dim(state n) {
 std::pair<state, state> con_frac_approx(long double val, long double maxdenum) {
     long long numerator = 1, denumerator = 0;
     state numlast = 0, denumlast = 1;
-    const float interpolation_step = g_eps * 1e4 * 5;
+    //const float interpolation_step = g_eps * 1e4 * 5;
     long double ai = val;
     long double step = 0.0f;
     do {
@@ -122,7 +135,7 @@ int shor(int n) {
         printf("Too big number\n");
         return MAX_TICK_COUNT;
     }
-    state m_state;
+    state m_state = 0;
     int tick_count = 0;
 
 
@@ -147,12 +160,12 @@ int shor(int n) {
         tmp->printNorm();
 
         //stage1 delete local vars which we used, in Uf
-        DeleteLocalVars(*tmp, local_variables_size);
+        QRegHelpers::DeleteLocalVars(*tmp, local_variables_size);
         //stage2 Apply QFT on whole register(because it`s simplier, than use *** paddings)
         QFT::ApplyQFT(*tmp, all_width);
         tmp->printNorm();
         //Swap XY because measurer works only with X
-        SwapXY(*tmp, all_width);
+        QRegHelpers::SwapXY(*tmp, all_width);
         tmp->printNorm();
 
         //Measure Y(now in X) with simple Measurer(basis is natural(like |0><0|)
@@ -164,7 +177,7 @@ int shor(int n) {
 #endif
 
 #ifdef STATS_ONLY
-        printf("\n States count == %llu, Finished with %llu\n", tmp->getStatesSize(), m_state);
+        printf("\n States count == %lu, Finished with %llu\n", tmp->getStatesSize(), m_state);
         tmp->print();
         tmp->printNorm();
         return -1;
@@ -221,8 +234,18 @@ void test() {
     }
 }
 
+void userInit() {
+    MPI_Init(NULL, NULL);
+}
+
+
+void userFinalize() {
+    MPI_Finalize();
+}
+
 int main(int argc, char *argv[])
 {
+    userInit();
     gates_test();
     //return 0;
 
@@ -238,6 +261,7 @@ int main(int argc, char *argv[])
 //    shor(n);
     //    freopen("scheme.txt", "w", stderr);
     //test();
+    userFinalize();
     return 0;
 
 }

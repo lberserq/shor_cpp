@@ -18,6 +18,9 @@ QMAKE_INCDIR +=  /home/lberserq/svn/lq/libquantum-1.1.1/.libs/
 LIBS += /home/lberserq/svn/lq/libquantum-1.1.1/.libs/libquantum.a
 QMAKE_LFLAGS += -fopenmp
 
+INCLUDEPATH += /usr/lib64/mpi/gcc/openmpi/include/openmpi/ompi/mpi/cxx
+INCLUDEPATH += /usr/lib64/mpi/gcc/openmpi/include/
+QMAKE_LINK = mpicxx
 
 SOURCES += main.cpp \
     qregister.cpp \
@@ -27,8 +30,7 @@ SOURCES += main.cpp \
     multiplier.cpp \
     qft.cpp \
     measure.cpp \
-    tests.cpp \
-    qft_adder.cpp
+    tests.cpp
 
 HEADERS += \
     qregister.h \
@@ -39,5 +41,4 @@ HEADERS += \
     multiplier.h \
     qft.h \
     measure.h \
-    tests.h \
-    qft_adder.h
+    tests.h

@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <algorithm>
 #include <set>
+#include <mpi.h>
+
 /*!
   intent draw operators like a tex
   example
@@ -14,7 +16,6 @@
           |>
  * \brief m_text
  */
-
 static std::vector<std::string> m_text;
 void log_init_reg(int m_w) {
     m_text.clear();
@@ -145,6 +146,18 @@ void log_print()
     }
 }
 
+ParallelSubSystemHelper::mpicfg ParallelSubSystemHelper::getConfig() {
+    ParallelSubSystemHelper::mpicfg cfg;
+    MPI_Comm_rank(MPI_COMM_WORLD, &cfg.rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &cfg.size);
+    return cfg;
+}
+
+
+
+
+//namespace simpleNoiseNoParallelWorld {
+
 int get_bit(state x, int id) {
     return (x >> id) & 1;
 }
@@ -238,12 +251,12 @@ double errorLevel = 0.001f;
 
 QMatrix genNoise(int w) {
     QMatrix res(1 << w, 1 << w);
-    long double e_w = std::pow(M_SQRT1_2l, w - 1);
+    //long double e_w = std::pow(M_SQRT1_2l, w - 1);
     for (unsigned i = 0; i < static_cast<state>(1 << w); i += 2) {
         for (unsigned j = 0; j < static_cast<state>(1 << w); j += 2) {
             if (i == j) {
                 long double val = errorLevel * gen_rand();
-                long double cs = cos(val), sn = sin(val);
+                //long double cs = cos(val), sn = sin(val);
                 res(i, j) = cos(val);
                 res(i + 1, j + 1) = res(i, j);
                 res(i, j + 1) = sin(val);
@@ -251,26 +264,6 @@ QMatrix genNoise(int w) {
             }
         }
     }
-    //        fprintf(stderr, "\n");
-    //    for (int i = 0; i < (1 << w); i++) {
-    //        mcomplex sum = 0;
-    //        for (int j = 0; j < (1 << w); j++) {
-    //            mcomplex tmp = res(i, j);
-    //            sum += tmp * tmp;
-    //            double tre = tmp.real(), tim = tmp.imag();
-    //            fprintf(stderr, "%.8llf + i%.8llf ", res(i, j).real(), res(i,j).imag());
-    //        }
-    //        fprintf(stderr, "PREC = %llf \n", sum.real());
-    //        if (std::abs(sum.real() - 1.0) > errorLevel) {
-    //            abort();
-    //        }
-    //    }
-
-    //    static int p = 0;
-    //    if (p++ == 5)
-    //        abort();
-
-
     return res;
 }
 
@@ -309,9 +302,124 @@ void ApplyFToffoli(IQRegister &reg, int id0, int id1, int id2)
     //    }
 }
 
+namespace OpenMPQuantumOperations
+{
+    void ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
+    {
+        QMatrix resm = m;
+#ifdef USE_NOISE
+        resm = resm * genNoise(1);
+#endif
+#ifdef LOGGING
+        std::set<int> m_s; m_s.insert(id0); log_str(m_s);
+#endif
+        std::vector<mcomplex> ampls;
+        ampls.resize(reg.getStates().size());
+        state st_sz = reg.getStatesSize();
+        int m_w = reg.getWidth();
+        //int local_id0 = m_w - id0 - 1;
+        int local_id0 = id0;
+        if (local_id0 >= reg.getWidth()) {
+            throw std::invalid_argument("Invalid id for OneQBitOp");
+        }
+#pragma omp parallel for schedule(static)
+        for (state i = 0; i < st_sz; i++) {
+            int s_id = get_bit(i, local_id0);
+            ampls[i] = resm(s_id, 0) * reg.getStates()[set_bit(i, id0, 0)] + resm(s_id, 1) * reg.getStates()[set_bit(i, id0, 1)];
+        }
+        reg.setStates(ampls);
+    }
+
+
+    void ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0,int id1)
+    {
+        QMatrix resm = m;
+#ifdef FULL_NOISE
+        resm = resm * genNoise(2);
+#endif
+
+#ifdef LOGGING
+        std::set<int> m_s; m_s.insert(id0); m_s.insert(id1); log_str(m_s);
+#endif
+
+        std::vector<mcomplex> ampls;
+        ampls.resize(reg.getStates().size());
+        state st_sz = reg.getStatesSize();
+        int local_id0 = id0;
+        int local_id1 = id1;
+
+        if (local_id0 >= reg.getWidth()
+                || local_id1 >= reg.getWidth()) {
+            throw std::invalid_argument("Invalid id for DiQBitOp");
+        }
+#pragma omp parallel for schedule(static)
+        for (state i = 0; i < st_sz; i++) {
+            int id_curr0 = get_bit(i, local_id0);
+            int id_curr1 = get_bit(i, local_id1);
+            mcomplex ampl = 0.0f;
+            for (int j = 0; j < 2; j++) {
+                for (int k = 0; k < 2; k++) {
+                    int s_id = set_bit(i, local_id0, j);
+                    s_id = set_bit(s_id, local_id1, k);
+                    ampl += resm(j * 2 + k, id_curr0 * 2 + id_curr1) * reg.getStates()[s_id];
+                }
+            }
+            ampls[i] = ampl;
+        }
+        reg.setStates(ampls);
+
+    }
+
+
+    void ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1, int id2)
+    {
+        QMatrix resm = m;
+#ifdef FULL_NOISE
+        resm = resm * genNoise(3);
+#endif
+
+#ifdef LOGGING
+        std::set<int> m_s; m_s.insert(id0);  m_s.insert(id1); m_s.insert(id2); log_str(m_s);
+#endif
+
+        std::vector<mcomplex> ampls;
+        ampls.resize(reg.getStates().size());
+        state st_sz = reg.getStatesSize();
+        int local_id0 = id0;
+        int local_id1 = id1;
+        int local_id2 = id2;
+        if (local_id0 >= reg.getWidth()
+                || local_id1 >= reg.getWidth()
+                || local_id2 >= reg.getWidth()) {
+            throw std::invalid_argument("Invalid id for TriQBitOp");
+        }
+#pragma omp parallel for schedule(static)
+        for (state i = 0; i < st_sz; i++) {
+            int id_curr0 = get_bit(i, local_id0);
+            int id_curr1 = get_bit(i, local_id1);
+            int id_curr2 = get_bit(i, local_id2);
+            mcomplex ampl = 0.0;
+            for (int j = 0; j < 2; j++) {
+                for (int k = 0; k < 2; k++) {
+                    for (int p = 0; p < 2; p++) {
+                        int s_id = set_bit(i, local_id0, j);
+                        s_id = set_bit(s_id, local_id1, k);
+                        s_id = set_bit(s_id, local_id2, p);
+                        ampl += resm(j * 4 + k * 2 + p, id_curr0 * 4 + id_curr1 * 2 + id_curr2) * reg.getStates()[s_id];
+                    }
+                }
+            }
+            ampls[i] = ampl;
+        }
+        reg.setStates(ampls);
+
+    }
+
+}//end of OpenMPQuantumOperations
 
 void ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
 {
+    MPI_Barrier(MPI_COMM_WORLD);
     QMatrix resm = m;
 #ifdef USE_NOISE
     resm = resm * genNoise(1);
@@ -321,82 +429,230 @@ void ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
 #endif
     std::vector<mcomplex> ampls;
     ampls.resize(reg.getStates().size());
+    memset(&ampls[0], 0, ampls.size() * sizeof(ampls[0]));
     state st_sz = reg.getStatesSize();
-    int m_w = reg.getWidth();
-    //int local_id0 = m_w - id0 - 1;
     int local_id0 = id0;
     if (local_id0 >= reg.getWidth()) {
         throw std::invalid_argument("Invalid id for OneQBitOp");
     }
-#pragma omp parallel for schedule(static)
-    for (state i = 0; i < st_sz; i++) {
-        int s_id = get_bit(i, local_id0);
-        ampls[i] = resm(s_id, 0) * reg.getStates()[set_bit(i, id0, 0)] + resm(s_id, 1) * reg.getStates()[set_bit(i, id0, 1)];
+
+    const int OperationDimension = 2;
+    int neighbours[OperationDimension];
+    for (int i = 0; i < OperationDimension; i++) {
+        neighbours[i] = set_bit(
+                            reg.getOffset(),
+                            local_id0, i)
+                        / reg.getStatesSize();
+    }
+
+    std::vector<int> RealNeighbours;
+    for (int i = 0; i < OperationDimension; i++) {
+        bool found = std::find(RealNeighbours.begin(), RealNeighbours.end(), neighbours[i]) != RealNeighbours.end();
+        if (!found) {
+            RealNeighbours.push_back(neighbours[i]);
+        }
+    }
+    std::sort(RealNeighbours.begin(), RealNeighbours.end());
+
+    std::vector<int> temp;
+    std::vector<int>::iterator inext,  it = std::find(RealNeighbours.begin(), RealNeighbours.end(), ParallelSubSystemHelper::getConfig().rank);
+    inext = (it == RealNeighbours.end() - 1) ? RealNeighbours.begin() : it + 1;
+    if (inext != RealNeighbours.begin()) {
+        std::copy(inext, RealNeighbours.end(), std::back_inserter(temp));
+    }
+    std::copy(RealNeighbours.begin(), it, std::back_inserter(temp));
+    RealNeighbours = temp;
+
+    //#pragma omp parallel for schedule(static)
+
+    const int e_tag = 0x76;
+    int local_index = reg.getOffset();
+
+
+    for (size_t currentNeighbour = 0; currentNeighbour < RealNeighbours.size() + 1; currentNeighbour++) {
+        for (state i = 0; i < st_sz; i++) {
+            int g_id = i + reg.getOffset();
+            int currentId = get_bit(g_id, local_id0);
+            mcomplex currentAmpl = 0.0f;
+            for (int cid0 = 0; cid0 < 2; cid0++) {
+                int s_id = set_bit(g_id, local_id0, cid0);
+                if (s_id >= local_index
+                        && s_id < local_index + reg.getStatesSize()) {
+                    currentAmpl += m(currentId, cid0) * reg.getStates()[s_id - local_index];
+                }
+            }
+            ampls[i] += currentAmpl;
+        }
+        if (currentNeighbour == RealNeighbours.size()) {
+            continue;
+        }
+        int nextNeighbour = 0, prevNeighbour = 0;
+        nextNeighbour = RealNeighbours[0];
+        prevNeighbour = RealNeighbours[RealNeighbours.size() - 1];
+
+        MPI_Status st;
+        if (RealNeighbours[currentNeighbour] != ParallelSubSystemHelper::getConfig().rank) {
+
+            MPI_Sendrecv_replace(&reg.getStates()[0],
+                    reg.getStatesSize(),
+                    MPI_DOUBLE_COMPLEX,
+                    nextNeighbour,
+                    e_tag,
+                    prevNeighbour,
+                    e_tag,
+                    MPI_COMM_WORLD,
+                    &st);
+            int currentId = (RealNeighbours.size() - 1 - currentNeighbour +
+                             RealNeighbours.size()) % RealNeighbours.size();
+
+            local_index = RealNeighbours[currentId] * reg.getStates().size();
+        }
     }
     reg.setStates(ampls);
+    MPI_Barrier(MPI_COMM_WORLD);
 }
-
-
-void ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0,int id1)
+/* 000 - 1
+ * 001 - 1
+ *
+ * 010 - 2
+ * 011 - 2
+ *
+ * 100 - 3
+ * 101 - 3
+ *
+ * 110 - 4.c
+ * 111 - 4
+ *
+ * /
+ */
+void ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1)
 {
+    MPI_Barrier(MPI_COMM_WORLD);
     QMatrix resm = m;
-#ifdef FULL_NOISE
+#ifdef USE_NOISE
     resm = resm * genNoise(2);
 #endif
-
 #ifdef LOGGING
-    std::set<int> m_s; m_s.insert(id0); m_s.insert(id1); log_str(m_s);
+    std::set<int> m_s; m_s.insert(id0); log_str(m_s);
 #endif
-
     std::vector<mcomplex> ampls;
     ampls.resize(reg.getStates().size());
+    memset(&ampls[0], 0, ampls.size() * sizeof(ampls[0]));
     state st_sz = reg.getStatesSize();
-    //    int m_w = reg.getWidth();
-    //    int local_id0 = m_w - id0 - 1, local_id1 = m_w - id1 - 1;
     int local_id0 = id0;
     int local_id1 = id1;
-
     if (local_id0 >= reg.getWidth()
             || local_id1 >= reg.getWidth()) {
         throw std::invalid_argument("Invalid id for DiQBitOp");
     }
-#pragma omp parallel for schedule(static)
-    for (state i = 0; i < st_sz; i++) {
-        int id_curr0 = get_bit(i, local_id0);
-        int id_curr1 = get_bit(i, local_id1);
-        mcomplex ampl = 0.0f;
-        for (int j = 0; j < 2; j++) {
-            for (int k = 0; k < 2; k++) {
-                int s_id = set_bit(i, local_id0, j);
-                s_id = set_bit(s_id, local_id1, k);
-                ampl += resm(j * 2 + k, id_curr0 * 2 + id_curr1) * reg.getStates()[s_id];
-            }
+
+    const int OperationDimension = 4;
+    int neighbours[OperationDimension];
+
+
+    const int drank = 1;// 0 -- 1-2-3; 1 -- 2-3-0; 2 -- 3-0-1; 3 -- 0-1-2;
+    for (int i = 0; i < OperationDimension; i++) {
+        int currId0 = ((i & 0x2) > 0);
+        int currId1 = ((i & 0x1) > 0);
+        state currState = reg.getOffset();
+        currState = set_bit(currState, local_id0, currId0);
+        currState = set_bit(currState, local_id1, currId1);
+
+        neighbours[i] = currState / reg.getStatesSize();
+    }
+
+
+    std::vector<int> RealNeighbours;
+    for (int i = 0; i < OperationDimension; i++) {
+        bool found = std::find(RealNeighbours.begin(), RealNeighbours.end(), neighbours[i]) != RealNeighbours.end();
+        if (!found) {
+            RealNeighbours.push_back(neighbours[i]);
         }
-        ampls[i] = ampl;
+    }
+    std::sort(RealNeighbours.begin(), RealNeighbours.end());
+
+    std::vector<int> temp;
+    std::vector<int>::iterator inext,  it = std::find(RealNeighbours.begin(), RealNeighbours.end(), ParallelSubSystemHelper::getConfig().rank);
+    inext = (it == RealNeighbours.end() - 1) ? RealNeighbours.begin() : it + 1;
+    if (inext != RealNeighbours.begin()) {
+        std::copy(inext, RealNeighbours.end(), std::back_inserter(temp));
+    }
+    std::copy(RealNeighbours.begin(), it, std::back_inserter(temp));
+    RealNeighbours = temp;
+
+
+
+    //#pragma omp parallel for schedule(static)
+
+    const int e_tag = 0x77;
+    int local_index = reg.getOffset();
+
+    for (size_t currentNeighbour = 0; currentNeighbour < RealNeighbours.size() + 1; currentNeighbour++) {
+        for (state i = 0; i < st_sz; i++) {
+            int g_id = i + reg.getOffset();
+            int currentId0 = get_bit(g_id, local_id0);
+            int currentId1 = get_bit(g_id, local_id1);
+            int currentId = currentId0 * 2 + currentId1;
+            mcomplex currentAmpl = 0.0f;
+            for (int cid0 = 0; cid0 < 2; cid0++) {
+                for (int cid1 = 0; cid1 < 2; cid1++) {
+                    int s_id = set_bit(g_id, local_id0, cid0);
+                    s_id = set_bit(s_id, local_id1, cid1);
+                    if (s_id >= local_index
+                            && s_id < local_index + reg.getStatesSize()) {
+                        currentAmpl += m(currentId, cid0 * 2 + cid1) * reg.getStates()[s_id - local_index];
+                    }
+                }
+            }
+            ampls[i] += currentAmpl;
+        }
+
+        if (currentNeighbour == RealNeighbours.size()) {
+            continue;
+        }
+        int nextNeighbour = 0, prevNeighbour = 0;
+        nextNeighbour = RealNeighbours[0];
+        prevNeighbour = RealNeighbours[RealNeighbours.size() - 1];
+
+        MPI_Status st;
+        if (RealNeighbours[currentNeighbour] != ParallelSubSystemHelper::getConfig().rank) {
+            MPI_Sendrecv_replace(&reg.getStates()[0],
+                    reg.getStatesSize(),
+                    MPI_DOUBLE_COMPLEX,
+                    nextNeighbour,
+                    e_tag,
+                    prevNeighbour,
+                    e_tag,
+                    MPI_COMM_WORLD,
+                    &st);
+
+            int currentId = (RealNeighbours.size() - 1 - currentNeighbour +
+                             RealNeighbours.size()) % RealNeighbours.size();
+
+            local_index = RealNeighbours[currentId] * reg.getStates().size();
+        }
+
     }
     reg.setStates(ampls);
+    MPI_Barrier(MPI_COMM_WORLD);
 
 }
 
 
 void ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1, int id2)
 {
+    MPI_Barrier(MPI_COMM_WORLD);
     QMatrix resm = m;
-#ifdef FULL_NOISE
+#ifdef USE_NOISE
     resm = resm * genNoise(3);
 #endif
-
 #ifdef LOGGING
-    std::set<int> m_s; m_s.insert(id0);  m_s.insert(id1); m_s.insert(id2); log_str(m_s);
+    std::set<int> m_s; m_s.insert(id0); log_str(m_s);
 #endif
-
     std::vector<mcomplex> ampls;
     ampls.resize(reg.getStates().size());
+    memset(&ampls[0], 0, ampls.size() * sizeof(ampls[0]));
     state st_sz = reg.getStatesSize();
-    //    int m_w = reg.getWidth();
-    //    int local_id0 = m_w - id0 - 1;
-    //    int local_id1 = m_w - id1 - 1;
-    //    int local_id2 = m_w - id2 - 1;
     int local_id0 = id0;
     int local_id1 = id1;
     int local_id2 = id2;
@@ -405,29 +661,122 @@ void ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1, int
             || local_id2 >= reg.getWidth()) {
         throw std::invalid_argument("Invalid id for TriQBitOp");
     }
-    #pragma omp parallel for schedule(static)
-    for (state i = 0; i < st_sz; i++) {
-        int id_curr0 = get_bit(i, local_id0);
-        int id_curr1 = get_bit(i, local_id1);
-        int id_curr2 = get_bit(i, local_id2);
-        mcomplex ampl = 0.0;
-        for (int j = 0; j < 2; j++) {
-            for (int k = 0; k < 2; k++) {
-                for (int p = 0; p < 2; p++) {
-                    int s_id = set_bit(i, local_id0, j);
-                    s_id = set_bit(s_id, local_id1, k);
-                    s_id = set_bit(s_id, local_id2, p);
-                    ampl += resm(j * 4 + k * 2 + p, id_curr0 * 4 + id_curr1 * 2 + id_curr2) * reg.getStates()[s_id];
+
+    const int OperationDimension = 8;
+    int neighbours[OperationDimension];
+    for (int i = 0; i < OperationDimension; i++) {
+        int currId0 = ((i & 0x4) > 0);
+        int currId1 = ((i & 0x2) > 0);
+        int currId2 = ((i & 0x1) > 0);
+
+        state currState = reg.getOffset();
+        currState = set_bit(currState, local_id0, currId0);
+        currState = set_bit(currState, local_id1, currId1);
+        currState = set_bit(currState, local_id2, currId2);
+
+        neighbours[i] = currState / reg.getStatesSize();
+    }
+
+    const int drank = 2;
+
+    std::vector<int> RealNeighbours;
+    for (int i = 0; i < OperationDimension; i++) {
+        bool found = std::find(RealNeighbours.begin(), RealNeighbours.end(), neighbours[i]) != RealNeighbours.end();
+        if (!found) {
+            RealNeighbours.push_back(neighbours[i]);
+        }
+    }
+    std::sort(RealNeighbours.begin(), RealNeighbours.end());
+
+    std::vector<int> temp;
+    std::vector<int>::iterator inext,  it = std::find(RealNeighbours.begin(), RealNeighbours.end(), ParallelSubSystemHelper::getConfig().rank);
+    inext = (it == RealNeighbours.end() - 1) ? RealNeighbours.begin() : it + 1;
+    if (inext != RealNeighbours.begin()) {
+        std::copy(inext, RealNeighbours.end(), std::back_inserter(temp));
+    }
+    std::copy(RealNeighbours.begin(), it, std::back_inserter(temp));
+    RealNeighbours = temp;
+
+
+
+
+    //0--1-2-3  0->1->2->3->0
+    //1--2-3-0
+    //2--3-0-1
+    //3--0-1-2
+
+
+    //#pragma omp parallel for schedule(static)
+
+
+
+
+    const int e_tag = 0x78;
+    int local_index = reg.getOffset();
+    for (int currentNeighbour = 0; currentNeighbour < RealNeighbours.size() + 1; currentNeighbour++) {
+        for (state i = 0; i < st_sz; i++) {
+            int g_id = i + reg.getOffset();
+
+            int currentId0 = get_bit(g_id, local_id0);
+            int currentId1 = get_bit(g_id, local_id1);
+            int currentId2 = get_bit(g_id, local_id2);
+
+            int currentId = currentId0 * 4 + currentId1 * 2 + currentId2;
+            mcomplex currentAmpl = 0.0f;
+            for (int cid0 = 0; cid0 < 2; cid0++) {
+                for (int cid1 = 0; cid1 < 2; cid1++) {
+                    for (int cid2 = 0; cid2 < 2; cid2++) {
+                        int s_id = set_bit(g_id, local_id0, cid0);
+                        s_id = set_bit(s_id, local_id1, cid1);
+                        s_id = set_bit(s_id, local_id2, cid2);
+
+                        if (s_id >= local_index
+                                && s_id < local_index + reg.getStatesSize()) {
+                            currentAmpl += m(currentId, cid0 * 4 + cid1 * 2 + cid2) * reg.getStates()[s_id - local_index];
+                        }
+                    }
                 }
             }
+            ampls[i] += currentAmpl;
         }
-        ampls[i] = ampl;
+
+        if (currentNeighbour == RealNeighbours.size()) {
+            continue;
+        }
+        int nextNeighbour = 0, prevNeighbour = 0;
+        nextNeighbour = RealNeighbours[0];
+        prevNeighbour = RealNeighbours[RealNeighbours.size() - 1];
+        //        dumpVar("NEXT", drank)
+        //        dumpVar(nextNeighbour, drank)
+        //        dumpVar("PREV", drank)
+        //        dumpVar(prevNeighbour, drank)
+
+
+        MPI_Status st;
+        if (RealNeighbours[currentNeighbour] != ParallelSubSystemHelper::getConfig().rank) {
+            MPI_Sendrecv_replace(&reg.getStates()[0],
+                    reg.getStatesSize(),
+                    MPI_DOUBLE_COMPLEX,
+                    nextNeighbour,
+                    e_tag,
+                    prevNeighbour,
+                    e_tag,
+                    MPI_COMM_WORLD,
+                    &st);
+            int currentId = (RealNeighbours.size() - 1 - currentNeighbour +
+                             RealNeighbours.size()) % RealNeighbours.size();
+
+            local_index = RealNeighbours[currentId] * reg.getStates().size();
+
+        } else {
+            std::cerr << "RANK$$$$$$$$$$$$$$$ " << ParallelSubSystemHelper::getConfig().rank << std::endl;
+            std::cerr << "$$$$$$$$$$$$$$$$$$$ " << currentNeighbour << std::endl;
+        }
+
     }
     reg.setStates(ampls);
-
+    MPI_Barrier(MPI_COMM_WORLD);
 }
-
-
 
 
 void ApplySWAP(IQRegister &reg, int id0, int id1) {
@@ -482,3 +831,16 @@ void ApplyCSWAP(IQRegister &reg, int id0, int id1, int id2) {
     //    }
 }
 
+//}
+
+
+double xGenRand()
+{
+    static unsigned long long x = 179425019;
+    const unsigned long long p = 179425019;
+    const unsigned long long q = 179425027;
+    const unsigned long long m = p *q;
+    const unsigned long long ULRND_MAX  =0xFFFFFFFFFFFFFFFF;
+    x = (x * x) % m;
+    return static_cast<double>(x) / ULRND_MAX;
+}

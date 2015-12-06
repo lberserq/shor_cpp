@@ -15,6 +15,7 @@ namespace tests {
     void MeasureTest();
     void SwapTest();
     void collapseTest();
+    void fake_test();
 };
 
 #endif // TESTS_H
