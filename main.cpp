@@ -99,9 +99,9 @@ std::pair<state, state> con_frac_approx(long double val, long double maxdenum) {
 
 
 enum
-{
+    {
     MAX_TICK_COUNT = 100
-};
+    };
 /*!
  * \brief shor
  * \param n number to represent
@@ -122,9 +122,9 @@ void init_rand() {
 
 int shor(int n) {
     init_rand();
-//    if (n == 18) {
-//        n = 17 + 1;
-//    }
+    //    if (n == 18) {
+    //        n = 17 + 1;
+    //    }
     int all_width = get_dim(n * n);
     int width_local = get_dim(n);
     printf("Factorization of %d\n", n);
@@ -141,31 +141,45 @@ int shor(int n) {
 
     while (tick_count < MAX_TICK_COUNT) {
         tick_count++;
-        IQRegister *tmp = new StaticQRegister(all_width, 0);
+        IQRegister *tmp = new UserDefQRegister(all_width, 0);
         for(int i = 0; i < all_width; i++) {
             ApplyHadamard(*tmp, i);
         }
         // Alloc mem for Uf
+        q_log("WALSH");
+
         tmp->printNorm();
         tmp->allocSharedMem(local_variables_size);
+        q_log("ALLOC SHMEM");
 
-        int a = rand() % n;
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        int a = xGenIrand() % n;
         while (igcd(a, n) > 1 || a < 2) {
-            a = rand() % n;
+            a = xGenIrand() % n;
+            q_log("GCD ITERATION");
         }
+        MPI_Barrier(MPI_COMM_WORLD);
 
+//        int a = n + 1;
         fprintf(stderr, "New Round %d of %d \n RANDOM NUMBER == %d\n", tick_count, MAX_TICK_COUNT, a);
         //Apply Uf
+        q_log("IGCD");
         expamodn(*tmp, n, a, all_width, width_local);
+        q_log("EXPAMODN");
+
         tmp->printNorm();
 
         //stage1 delete local vars which we used, in Uf
         QRegHelpers::DeleteLocalVars(*tmp, local_variables_size);
+        q_log("DELLOCVARS");
         //stage2 Apply QFT on whole register(because it`s simplier, than use *** paddings)
         QFT::ApplyQFT(*tmp, all_width);
+        q_log("QFT");
         tmp->printNorm();
         //Swap XY because measurer works only with X
         QRegHelpers::SwapXY(*tmp, all_width);
+        q_log("SXY");
         tmp->printNorm();
 
         //Measure Y(now in X) with simple Measurer(basis is natural(like |0><0|)
@@ -176,19 +190,21 @@ int shor(int n) {
         exit(0);
 #endif
 
-#ifdef STATS_ONLY
-        printf("\n States count == %lu, Finished with %llu\n", tmp->getStatesSize(), m_state);
-        tmp->print();
-        tmp->printNorm();
-        return -1;
-#endif
+//#ifdef STATS_ONLY
+//        printf("\n States count == %lu, Finished with %llu\n", tmp->getStatesSize(), m_state);
+//        tmp->print();
+//        tmp->printNorm();
+//        return -1;
+//#endif
         if (m_state == static_cast<state>(-1)) {
             std::fprintf(stderr, "Invalid Measurement\n");
+            q_log("Invalid measurement")
             delete tmp;
             continue;
         }
         if (m_state == 0) {
             std::fprintf(stderr, "Zero measurement\n");
+            q_log("Zero measurement");
             delete tmp;
             continue;
         }
@@ -199,6 +215,7 @@ int shor(int n) {
         fprintf(stderr, "SIMPLIFIER %llu / %llu\n", frac.first, frac.second);
         if (frac.second % 2 == 1) {
             fprintf(stdout, "Unfortunately, but denumerator is odd next round\n");
+            q_log("Unfortunately, but denumerator is odd next round");
 
             delete tmp;
             continue;
@@ -213,25 +230,50 @@ int shor(int n) {
         int div2 = igcd(n, del1);
         if (div1 > 1 && div1 != n) {
             fprintf(stderr, "Lucky round divisors `ve been found %d * %d == %d\n", n / div1, div1, n);
+            q_log("Lucky round divisors `ve been found");
+            q_log(n / div1);
+            q_log(div1);
+            q_log(n);
+
             return tick_count;
         } else if (div2 > 1 && div2 != n) {
             fprintf(stderr, "Lucky round divisors `ve been found %d * %d == %d\n", n / div2, div2, n);
+            q_log("Lucky round divisors `ve been found");
+            q_log(n / div2);
+            q_log(div2);
+            q_log(n);
             return tick_count;
         } else {
             fprintf(stderr, "Unlucky round\n");
+            q_log("Unlucky round");
+
         }
 
     }
     fprintf(stderr, "Cant find divisors with %d iterations, maybe %d is prime ?", MAX_TICK_COUNT, n);
+
+    q_log("Cant find divisors with");
+    q_log(MAX_TICK_COUNT);
+    q_log("iterations, maybe");
+    q_log(n);
+    q_log("is prime ?");
+
     return tick_count;
 
 }
 
-void test() {
+void shor_test() {
     srand(0);
     for (int i = 4;i < 21; i++) {
         shor(i);
     }
+}
+
+#include "xml_parsers.h"
+void xml_test() {
+    XmlParser parser("/home/lberserq/tmp/test.xml");
+    std::vector<QMatrix> resV = parser.GetOperators(2);
+    std::cout << resV[0].toString();
 }
 
 void userInit() {
@@ -245,22 +287,25 @@ void userFinalize() {
 
 int main(int argc, char *argv[])
 {
-    userInit();
-    gates_test();
-    //return 0;
+    xml_test();
+    //userInit();
+    //    gates_test();
+    return 0;
 
-//    if (argc < 2) {
-//        fprintf(stderr, "Usage %s Number\n", argv[0]);
-//        return 1;
-//    }
-//    int n;
-//    if (!sscanf(argv[1], "%d", &n)) {
-//        fprintf(stderr, "%s is not a number\n", argv[1]);
-//        return 1;
-//    }
-//    shor(n);
-    //    freopen("scheme.txt", "w", stderr);
-    //test();
+    if (argc < 2) {
+        fprintf(stderr, "Usage %s Number\n", argv[0]);
+    } else {
+        int n;
+        if (!sscanf(argv[1], "%d", &n)) {
+            fprintf(stderr, "%s is not a number\n", argv[1]);
+        } else {
+            MPI_Barrier(MPI_COMM_WORLD);
+            shor(n);
+            MPI_Barrier(MPI_COMM_WORLD);
+            freopen("scheme.txt", "w", stderr);
+        }
+        //test();
+    }
     userFinalize();
     return 0;
 

@@ -210,7 +210,7 @@ void SharedQSimpleQRegister::allocSharedMem(int width) {
     m_global_width += width;
     m_localstates.resize(static_cast<state>(1 << m_global_width) / m_cfg.size);
     for (int i = m_localstates.size() - 1; i >= 0; i--) {
-        state curr_state = i + m_local_offset;
+        //state curr_state = i + m_local_offset;
         if (i && std::abs(m_localstates[i]) > g_eps) {
             m_localstates[i << width] = m_localstates[i];
             m_localstates[i] = 0;
@@ -252,7 +252,6 @@ void SharedQSimpleQRegister::print() {
         state m_sz = fullReg.size();
         for(state i = 0; i < m_sz; i++)
         {
-            mcomplex t = fullReg[i];
                     if (std::abs(fullReg[i]) < g_eps) {
                         continue;
                     }
@@ -316,8 +315,8 @@ void SharedQSimpleQRegister::collapseState(int id, long double amplProb) {
     std::vector<mcomplex> new_ampls;
     new_st.resize(size);
     new_ampls.resize(size);
-    m_global_width--;
-    m_global_width = (m_global_width < 0) ? 0 : m_global_width;
+    m_global_width = (m_global_width == 0) ? 0 : m_global_width - 1;
+//    m_global_width--;
     long double gsum = 0;
     MPI_Allreduce(&sum, &gsum, 1, MPI_LONG_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     sum = gsum;
@@ -331,7 +330,7 @@ void SharedQSimpleQRegister::collapseState(int id, long double amplProb) {
     }
 
     int cnt = 0;
-    const int drank = 2;
+    //const int drank = 2;
 
     for(state i = 0; i < m_sz; i++)
     {
@@ -391,7 +390,7 @@ namespace QRegHelpers {
         probs = gprobs;
 
         //long double rnd_num =  static_cast<long double>(rand()) / RAND_MAX;
-        long double rnd_num = xGenRand();
+        long double rnd_num = xGenDrand();
         MPI_Bcast(&rnd_num, 1, MPI_LONG_DOUBLE, 0, MPI_COMM_WORLD);
         long double targ_val = 0.0f;
         if (rnd_num> probs) {
@@ -402,13 +401,9 @@ namespace QRegHelpers {
 
     void DeleteLocalVars(IQRegister &reg, int size)
     {
-        int drank = 0;
+        //int drank = 0;
         for (int i = 0; i < size; i++) {
-            dumpVar(i, drank)
-            reg.print();
             DeleteVar(reg, 0);
-            reg.print();
-
         }
     }
 
@@ -421,7 +416,7 @@ namespace QRegHelpers {
 
     void RegSwapLR(int width, IQRegister &in)
     {
-        if (width > in.getWidth() / 2) {
+        if (width > static_cast<int>(in.getWidth() / 2)) {
             throw std::invalid_argument("Invalid width for RegSwapLR");
         }
         if (ParallelSubSystemHelper::getConfig().size == 1 && false) {

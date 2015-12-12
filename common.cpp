@@ -221,7 +221,7 @@ void ApplyCnot(IQRegister &reg, int id0, int id1) {
 }
 
 
-void ApplyFcnot(IQRegister &reg, int id0, int id1) {
+void ApplyFcnot(IQRegister &/*reg*/, int /*id0*/, int /*id1*/) {
     //    int sz = reg.getStates().size();
     //    for (int  i = 0; i < sz; i++) {
     //        state st = (reg.getStates())[i];
@@ -255,7 +255,7 @@ QMatrix genNoise(int w) {
     for (unsigned i = 0; i < static_cast<state>(1 << w); i += 2) {
         for (unsigned j = 0; j < static_cast<state>(1 << w); j += 2) {
             if (i == j) {
-                long double val = errorLevel * gen_rand();
+                long double val = errorLevel * xGenDrand();
                 //long double cs = cos(val), sn = sin(val);
                 res(i, j) = cos(val);
                 res(i + 1, j + 1) = res(i, j);
@@ -287,7 +287,7 @@ void ApplyToffoli(IQRegister &reg, int id0, int id1, int id2) {
 
 
 
-void ApplyFToffoli(IQRegister &reg, int id0, int id1, int id2)
+void ApplyFToffoli(IQRegister &/*reg*/, int /*id0*/, int /*id1*/, int /*id2*/)
 {
     //    int sz = reg.getStates().size();
     //    for (int i = 0; i < sz; i++){
@@ -316,10 +316,10 @@ namespace OpenMPQuantumOperations
         std::vector<mcomplex> ampls;
         ampls.resize(reg.getStates().size());
         state st_sz = reg.getStatesSize();
-        int m_w = reg.getWidth();
+        //int m_w = reg.getWidth();
         //int local_id0 = m_w - id0 - 1;
         int local_id0 = id0;
-        if (local_id0 >= reg.getWidth()) {
+        if (local_id0 >= static_cast<int>(reg.getWidth())) {
             throw std::invalid_argument("Invalid id for OneQBitOp");
         }
 #pragma omp parallel for schedule(static)
@@ -348,8 +348,8 @@ namespace OpenMPQuantumOperations
         int local_id0 = id0;
         int local_id1 = id1;
 
-        if (local_id0 >= reg.getWidth()
-                || local_id1 >= reg.getWidth()) {
+        if (local_id0 >= static_cast<int>(reg.getWidth())
+                || local_id1 >= static_cast<int>(reg.getWidth())) {
             throw std::invalid_argument("Invalid id for DiQBitOp");
         }
 #pragma omp parallel for schedule(static)
@@ -388,9 +388,9 @@ namespace OpenMPQuantumOperations
         int local_id0 = id0;
         int local_id1 = id1;
         int local_id2 = id2;
-        if (local_id0 >= reg.getWidth()
-                || local_id1 >= reg.getWidth()
-                || local_id2 >= reg.getWidth()) {
+        if (local_id0 >= static_cast<int>(reg.getWidth())
+                || local_id1 >= static_cast<int>(reg.getWidth())
+                || local_id2 >= static_cast<int>(reg.getWidth())) {
             throw std::invalid_argument("Invalid id for TriQBitOp");
         }
 #pragma omp parallel for schedule(static)
@@ -432,7 +432,7 @@ void ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
     memset(&ampls[0], 0, ampls.size() * sizeof(ampls[0]));
     state st_sz = reg.getStatesSize();
     int local_id0 = id0;
-    if (local_id0 >= reg.getWidth()) {
+    if (local_id0 >= static_cast<int>(reg.getWidth())) {
         throw std::invalid_argument("Invalid id for OneQBitOp");
     }
 
@@ -477,7 +477,7 @@ void ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
             for (int cid0 = 0; cid0 < 2; cid0++) {
                 int s_id = set_bit(g_id, local_id0, cid0);
                 if (s_id >= local_index
-                        && s_id < local_index + reg.getStatesSize()) {
+                        && s_id < local_index + static_cast<int>(reg.getStatesSize()) ) {
                     currentAmpl += m(currentId, cid0) * reg.getStates()[s_id - local_index];
                 }
             }
@@ -541,8 +541,8 @@ void ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1)
     state st_sz = reg.getStatesSize();
     int local_id0 = id0;
     int local_id1 = id1;
-    if (local_id0 >= reg.getWidth()
-            || local_id1 >= reg.getWidth()) {
+    if (local_id0 >= static_cast<int>(reg.getWidth())
+            || local_id1 >= static_cast<int>(reg.getWidth())) {
         throw std::invalid_argument("Invalid id for DiQBitOp");
     }
 
@@ -550,7 +550,7 @@ void ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1)
     int neighbours[OperationDimension];
 
 
-    const int drank = 1;// 0 -- 1-2-3; 1 -- 2-3-0; 2 -- 3-0-1; 3 -- 0-1-2;
+//    const int drank = 1;// 0 -- 1-2-3; 1 -- 2-3-0; 2 -- 3-0-1; 3 -- 0-1-2;
     for (int i = 0; i < OperationDimension; i++) {
         int currId0 = ((i & 0x2) > 0);
         int currId1 = ((i & 0x1) > 0);
@@ -599,7 +599,7 @@ void ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1)
                     int s_id = set_bit(g_id, local_id0, cid0);
                     s_id = set_bit(s_id, local_id1, cid1);
                     if (s_id >= local_index
-                            && s_id < local_index + reg.getStatesSize()) {
+                            && s_id < local_index + static_cast<int>(reg.getStatesSize())) {
                         currentAmpl += m(currentId, cid0 * 2 + cid1) * reg.getStates()[s_id - local_index];
                     }
                 }
@@ -656,9 +656,9 @@ void ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1, int
     int local_id0 = id0;
     int local_id1 = id1;
     int local_id2 = id2;
-    if (local_id0 >= reg.getWidth()
-            || local_id1 >= reg.getWidth()
-            || local_id2 >= reg.getWidth()) {
+    if (local_id0 >= static_cast<int>(reg.getWidth())
+            || local_id1 >= static_cast<int>(reg.getWidth())
+            || local_id2 >= static_cast<int>(reg.getWidth())) {
         throw std::invalid_argument("Invalid id for TriQBitOp");
     }
 
@@ -677,7 +677,7 @@ void ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1, int
         neighbours[i] = currState / reg.getStatesSize();
     }
 
-    const int drank = 2;
+//    const int drank = 2;
 
     std::vector<int> RealNeighbours;
     for (int i = 0; i < OperationDimension; i++) {
@@ -713,7 +713,7 @@ void ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1, int
 
     const int e_tag = 0x78;
     int local_index = reg.getOffset();
-    for (int currentNeighbour = 0; currentNeighbour < RealNeighbours.size() + 1; currentNeighbour++) {
+    for (size_t currentNeighbour = 0; currentNeighbour < RealNeighbours.size() + 1; currentNeighbour++) {
         for (state i = 0; i < st_sz; i++) {
             int g_id = i + reg.getOffset();
 
@@ -731,7 +731,7 @@ void ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1, int
                         s_id = set_bit(s_id, local_id2, cid2);
 
                         if (s_id >= local_index
-                                && s_id < local_index + reg.getStatesSize()) {
+                                && s_id < local_index + static_cast<int>(reg.getStatesSize())) {
                             currentAmpl += m(currentId, cid0 * 4 + cid1 * 2 + cid2) * reg.getStates()[s_id - local_index];
                         }
                     }
@@ -834,7 +834,7 @@ void ApplyCSWAP(IQRegister &reg, int id0, int id1, int id2) {
 //}
 
 
-double xGenRand()
+double xGenDrand()
 {
     static unsigned long long x = 179425019;
     const unsigned long long p = 179425019;
@@ -843,4 +843,16 @@ double xGenRand()
     const unsigned long long ULRND_MAX  =0xFFFFFFFFFFFFFFFF;
     x = (x * x) % m;
     return static_cast<double>(x) / ULRND_MAX;
+}
+
+
+int xGenIrand()
+{
+    static unsigned long long x = 179425020;
+    const unsigned long long p = 179425019;
+    const unsigned long long q = 179425027;
+    const unsigned long long m = p *q;
+//    const unsigned long long ULRND_MAX  =0xFFFFFFFFFFFFFFFF;
+    x = (x * x) % m;
+    return static_cast<int> (x);
 }

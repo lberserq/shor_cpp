@@ -9,7 +9,7 @@ state Measurer::Measure(IQRegister &reg)
     //double rnd = static_cast<double>(rand()) / RAND_MAX;
 
     //double rnd = drand48();
-    double rnd = xGenRand();
+    double rnd = xGenDrand();
     dumpVar(rnd, 0);
     MPI_Bcast(&rnd, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     std::vector<double> blockNorms;
@@ -32,7 +32,7 @@ state Measurer::Measure(IQRegister &reg)
 
 
     state res = -1;
-    if (ParallelSubSystemHelper::getConfig().rank == id) {
+    if (ParallelSubSystemHelper::getConfig().rank == static_cast<int>(id)) {
         for (state i = 0; i < reg.getStates().size(); i++) {
             mcomplex ampl = reg.getStates()[i];
             rnd -= std::abs(ampl) * std::abs(ampl);
@@ -42,7 +42,7 @@ state Measurer::Measure(IQRegister &reg)
             }
         }
     }
-    dumpVar(res, id)
+    dumpVar(res, static_cast<int>(id))
     MPI_Bcast(&res, 1, MPI_UNSIGNED_LONG_LONG, id, MPI_COMM_WORLD);
     return res;
 

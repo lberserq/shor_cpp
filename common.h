@@ -7,11 +7,15 @@
 void log_init_reg(int m_w);
 void log_print();
 void log_reinit_reg(int new_mw);
+
+QMatrix & loadFromXml(const std::string &fname);
 //int set_bit(state x, unsigned char id, int val);
 //int getbit(state x, int id);
 extern double errorLevel;
 
-double xGenRand();
+double xGenDrand();
+int xGenIrand();
+
 
 
 /*!

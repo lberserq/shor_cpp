@@ -82,6 +82,17 @@ public:
 //        }
 //        return *this;
 //    }
+    std::string toString() const {
+        std::stringstream stream;
+        stream << "MATRIX " << rows_cnt << 'x' << columns_cnt << '\n';
+        for (int i = 0; i < rows_cnt;i++) {
+            for (int j = 0; j < columns_cnt; j++)  {
+                stream << data_ptr[i][j] << ' ';
+            }
+            stream << '\n';
+        }
+        return stream.str();
+    }
 
     ~QMatrix();
 };

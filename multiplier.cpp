@@ -53,6 +53,8 @@ void Multiplier::mul()
 
     for (int i = 1; i < m_width; i++) {
 
+        q_log("MUL");
+        q_log(i);
         ApplyToffoli(m_reg, m_ctlid, 2 * m_width + 2 + i, tw);
 
         //(1 << i) *(1 >> i) == 1
@@ -91,6 +93,9 @@ void Multiplier::mulinv()
     m_a = abel_inverse(m_a, m_N);
 
     for (int i = m_width - 1; i > 0; i--) {
+
+        q_log("MULINV");
+        q_log(i);
         ApplyToffoli(m_reg, m_ctlid, 2 * m_width + 2 + i, tw);
 
         Adder *add = new Adder(m_N - ((1 << i) * m_a) % m_N, m_N, m_width, m_reg);
@@ -127,8 +132,9 @@ void Multiplier::BasicMultiplication(int x) {
 
 IQRegister &expamodn(IQRegister &in, int N, int x, int width_in, int local_width)
 {
+    q_log("EAN");
     ApplyNot(in, 2 * local_width + 2);
-
+    q_log("NOT");
     for (int i = 0; i < width_in; i++) {
         int pow = x % N;
         for (int j = 1; j < i + 1; j++) {
@@ -137,7 +143,9 @@ IQRegister &expamodn(IQRegister &in, int N, int x, int width_in, int local_width
         }
         Multiplier *mp = new Multiplier(in, N, local_width, pow, 3  * local_width + i + 2);
         in = mp->perform();
-        in.printNorm();
+        //in.printNorm();
+        q_log("EAXN");
+        q_log(i);
         delete mp;
     }
     return in;

@@ -1,6 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 #include <stdint.h>
+#include <stdexcept>
 enum
     {
     REG_NUM  = 4
@@ -37,7 +38,7 @@ namespace ParallelSubSystemHelper {
     /*void AllreduceHelper(long double &val, MPI_Op op) {
         long double gval = 0;
         if (getConfig().size) {
-            MPI_Allreduce(&gval, &val, 1, MPI_LONG_DOUBLE, op, MPI_COMM_WORLD);
+            MPI_Allreduce(&gval, &http://vk.com/public85340642val, 1, MPI_LONG_DOUBLE, op, MPI_COMM_WORLD);
         }
         val = gval;
     }*/
@@ -80,8 +81,18 @@ namespace ParallelSubSystemHelper {
 
 #define reduce_helper
 
+#define q_log(x) dumpVar(x, 0)
+
 extern void userInit();
 class StaticQRegister;
 class SharedQSimpleQRegister;
 typedef SharedQSimpleQRegister UserDefQRegister;
+
+enum
+{
+        XML_LOAD_FAILED = 100,
+};
+
+#define make_error(err)
+
 #endif // CONFIG_H

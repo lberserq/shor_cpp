@@ -11,12 +11,12 @@ QT       -= gui
 TARGET = quantum_cpp
 CONFIG   += console
 CONFIG   -= app_bundle
-QMAKE_CXXFLAGS += -std=c++11 -lquantum -fopenmp -DUSE_NOISE -DFULL_NOISE
+QMAKE_CXXFLAGS += -Werror -std=c++11 -lquantum -fopenmp -DUSE_NOISE -DFULL_NOISE
 TEMPLATE = app
 
 QMAKE_INCDIR +=  /home/lberserq/svn/lq/libquantum-1.1.1/.libs/
 LIBS += /home/lberserq/svn/lq/libquantum-1.1.1/.libs/libquantum.a
-QMAKE_LFLAGS += -fopenmp
+QMAKE_LFLAGS += -fopenmp -ltinyxml
 
 INCLUDEPATH += /usr/lib64/mpi/gcc/openmpi/include/openmpi/ompi/mpi/cxx
 INCLUDEPATH += /usr/lib64/mpi/gcc/openmpi/include/
@@ -30,7 +30,8 @@ SOURCES += main.cpp \
     multiplier.cpp \
     qft.cpp \
     measure.cpp \
-    tests.cpp
+    tests.cpp \
+    xml_parsers.cpp
 
 HEADERS += \
     qregister.h \
@@ -41,4 +42,5 @@ HEADERS += \
     multiplier.h \
     qft.h \
     measure.h \
-    tests.h
+    tests.h \
+    xml_parsers.h

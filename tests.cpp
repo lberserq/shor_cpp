@@ -27,7 +27,7 @@ int tests::width = 3;
 int compare(IQRegister *x, quantum_reg *t)
 {
     const double _t_eps = 1e-5;
-    if (t->width == x->getWidth()) {
+    if (t->width == static_cast<int>(x->getWidth()) ) {
         std::vector<mcomplex> xst = x->getAllReg();
         unsigned char errorFlag = 0;
         MPI_Barrier(MPI_COMM_WORLD);
@@ -71,7 +71,7 @@ int compare(IQRegister *x, quantum_reg *t)
         }
 
     } else {
-        if (t->width != x->getWidth()) {
+        if (t->width != static_cast<int>(x->getWidth()) ) {
             if (!ParallelSubSystemHelper::getConfig().rank){
                 std::fprintf(stderr, "ERROR WIDTHS ARE NOT EQUAL %ld vs %d\n", x->getWidth(), t->width);
             }
@@ -86,7 +86,7 @@ int compare(IQRegister *x, quantum_reg *t)
 
 void apply_walsh(IQRegister &reg)
 {
-    for (int i = 0; i <reg.getWidth(); i++) {
+    for (int i = 0; i < static_cast<int>(reg.getWidth()) ; i++) {
         ApplyHadamard(reg, i);
     }
 }
@@ -199,7 +199,7 @@ void tests::HadmardTest()
 void tests::CNOTTest() {
 
     ParallelLogger(stderr, "CNOT TEST\n");
-    const int N = 100;
+    //const int N = 100;
     const int width = 2;
     IQRegister *p = new UserDefQRegister(width, 2);
     quantum_reg t = quantum_new_qureg(2, width);
