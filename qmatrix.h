@@ -60,19 +60,22 @@ public:
         return *this;
     }
 
-    QMatrix operator *(const QMatrix &mat) {
-        QMatrix res(rows_cnt, mat.columns_cnt);
-        for (int i = 0; i < rows_cnt; i++) {
-            for (int k = 0; k < mat.columns_cnt; k++) {
-                mcomplex sum = 0.0f;
-                for (int j = 0; j < columns_cnt; j++) {
-                    sum += data_ptr[i][j] * mat.data_ptr[j][k];
-                }
-                res.data_ptr[i][k] = sum;
-            }
-        }
-        return res;
-    }
+//    QMatrix operator *(const QMatrix &mat) {
+//        QMatrix res(rows_cnt, mat.columns_cnt);
+//        for (int i = 0; i < rows_cnt; i++) {
+//            for (int k = 0; k < mat.columns_cnt; k++) {
+//                mcomplex sum = 0.0f;
+//                for (int j = 0; j < columns_cnt; j++) {
+//                    sum += data_ptr[i][j] * mat.data_ptr[j][k];
+//                }
+//                res.data_ptr[i][k] = sum;
+//            }
+//        }
+//        return res;
+//    }
+
+
+
 
 //    const QMatrix & operator *(const mcomplex &val) {
 //        for (int i = 0; i < rows_cnt; i++) {
@@ -94,8 +97,36 @@ public:
         return stream.str();
     }
 
+
+    QMatrix conj() {
+        QMatrix res(rows_cnt, columns_cnt);
+        for (int i = 0; i < rows_cnt; i++) {
+            for (int j = 0; j < columns_cnt; j++) {
+                res.data_ptr[j][i] = data_ptr[i][j];
+            }
+        }
+        return res;
+    }
+
+    int getRowsCount() const {
+        return rows_cnt;
+    }
+
+    int getColumnsCount() const {
+        return columns_cnt;
+    }
+
+    friend QMatrix operator + (const QMatrix &left, const QMatrix &right);
+    friend QMatrix operator * (const QMatrix &left, const QMatrix &right);
+
+
     ~QMatrix();
 };
+
+QMatrix operator * (const QMatrix &left, const QMatrix &right);
+QMatrix operator + (const QMatrix &left, const QMatrix &right);
+
+
 
 
 #endif // QMATRIX_H

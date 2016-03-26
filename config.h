@@ -10,7 +10,8 @@ const double g_eps = 1e-8;
 typedef unsigned long long state;
 #include <complex>
 #include <iterator>
-typedef std::complex<double> mcomplex;
+typedef  double real_t;
+typedef std::complex<real_t> mcomplex;
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
@@ -27,6 +28,27 @@ typedef  unsigned result_t;
 
 #include <stdexcept>
 
+
+inline int get_bit(state x, int id) {
+    return (x >> id) & 1;
+}
+
+inline int set_bit(state x, unsigned char id, int val) {
+    switch (val) {
+    case 0:
+        x &= ~(1 << id);
+        break;
+    case 1:
+        x |= (1 << id);
+        break;
+    default:
+        break;
+    }
+    return x;
+}
+
+
+
 namespace ParallelSubSystemHelper {
     struct mpicfg {
         int rank;
@@ -35,7 +57,7 @@ namespace ParallelSubSystemHelper {
     };
 
     mpicfg getConfig();
-    /*void AllreduceHelper(long double &val, MPI_Op op) {
+/*    void AllreduceHelper(long double &val, MPI_Op op) {
         long double gval = 0;
         if (getConfig().size) {
             MPI_Allreduce(&gval, &http://vk.com/public85340642val, 1, MPI_LONG_DOUBLE, op, MPI_COMM_WORLD);
@@ -82,6 +104,7 @@ namespace ParallelSubSystemHelper {
 #define reduce_helper
 
 #define q_log(x) dumpVar(x, 0)
+extern void *g_Root;
 
 extern void userInit();
 class StaticQRegister;

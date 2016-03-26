@@ -11,7 +11,7 @@ QT       -= gui
 TARGET = quantum_cpp
 CONFIG   += console
 CONFIG   -= app_bundle
-QMAKE_CXXFLAGS += -Werror -std=c++11 -lquantum -fopenmp -DUSE_NOISE -DFULL_NOISE
+QMAKE_CXXFLAGS += -Werror -std=c++03 -lquantum -fopenmp -DUSE_NOISE -DFULL_NOISE
 TEMPLATE = app
 
 QMAKE_INCDIR +=  /home/lberserq/svn/lq/libquantum-1.1.1/.libs/
@@ -31,7 +31,9 @@ SOURCES += main.cpp \
     qft.cpp \
     measure.cpp \
     tests.cpp \
-    xml_parsers.cpp
+    xml_parsers.cpp \
+    gatesimpl.cpp \
+    noise.cpp
 
 HEADERS += \
     qregister.h \
@@ -43,4 +45,13 @@ HEADERS += \
     qft.h \
     measure.h \
     tests.h \
-    xml_parsers.h
+    xml_parsers.h \
+    common_lib.h \
+    igates.h \
+    gatesimpl.h \
+    noise.h \
+    inoise.h \
+    commonworld.h \
+    icommonworld.h \
+    common_impl.h \
+    qmath.h

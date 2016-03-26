@@ -5,7 +5,9 @@
 //#include "complex.h"
 #include "measure.h"
 #include <complex.h>
+#if (__cplusplus >= 201103L)
 #include <ccomplex>
+#endif
 extern "C" {
 #include <quantum.h>
 }
@@ -491,8 +493,8 @@ void tests::expTest() {
     dumpVar("EA%N", 0)
     //fprintf(stderr, "TEST PASSED\n");
     MPI_Barrier(MPI_COMM_WORLD);
-    p->print();
-    quantum_print_qureg(t);
+    //p->print();
+    //quantum_print_qureg(t);
     MPI_Barrier(MPI_COMM_WORLD);
 
     for(int i=0;i<3*swidth+2;i++)
@@ -587,10 +589,10 @@ void tests::QFTTest() {
     width = 3;
     IQRegister *p = new UserDefQRegister(width, 2);
     ApplyToffoli(*p, 0, 1, 2);
-    log_print();
+    //log_print();
     quantum_reg t = quantum_new_qureg(2, width);
     apply_walsh(*p);
-    log_print();
+    //log_print();
     quantum_walsh(width, &t);
     if (compare(p, &t)) {
         return;
@@ -623,7 +625,6 @@ void tests::MeasureTest() {
         return;
     }
     state q = Measurer::Measure(*p);
-    p->print();
     if (q != static_cast<state>(-1)) {
         ParallelLogger(stderr, "TEST PASSED\n");
     } else {

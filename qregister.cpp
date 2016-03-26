@@ -50,7 +50,7 @@ void StaticQRegister::allocSharedMem(int width) {
     }
 }
 
-std::vector<mcomplex> StaticQRegister::getAllReg() {
+std::vector<mcomplex> StaticQRegister::getAllReg() const {
     return m_states;
 }
 
@@ -111,7 +111,7 @@ void StaticQRegister::collapseState(int id, long double amplProb) {
 }
 
 
-void StaticQRegister::print()
+void StaticQRegister::print() const
 {
     MPI_Barrier(MPI_COMM_WORLD);
     state m_sz = m_states.size();
@@ -148,7 +148,7 @@ double StaticQRegister::getLocalNorm() const {
     return sum;
 }
 
-void StaticQRegister::printNorm() {
+void StaticQRegister::printNorm() const {
 
     double sum = getLocalNorm();
     fprintf(stderr, "NORM == %.8lf\n", sum);
@@ -220,7 +220,7 @@ void SharedQSimpleQRegister::allocSharedMem(int width) {
     m_local_size = m_localstates.size();
 }
 
-std::vector<mcomplex> SharedQSimpleQRegister::getAllReg() {
+std::vector<mcomplex> SharedQSimpleQRegister::getAllReg() const {
     std::vector<mcomplex> fullReg; fullReg.resize(1);
     if (!ParallelSubSystemHelper::getConfig().rank) {
         fullReg.resize(static_cast<state>(1 << m_global_width));
@@ -231,8 +231,9 @@ std::vector<mcomplex> SharedQSimpleQRegister::getAllReg() {
     //        std::cerr << "LOCAL_SIZE " << m_localstates.size() << std::endl;
     //    }
 
+    std::vector<mcomplex> local_copy = m_localstates;
     MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Gather(&m_localstates[0],
+    MPI_Gather(&local_copy[0],
             m_localstates.size(),
             MPI_DOUBLE_COMPLEX,
             &fullReg[0],
@@ -244,7 +245,7 @@ std::vector<mcomplex> SharedQSimpleQRegister::getAllReg() {
     return fullReg;
 }
 
-void SharedQSimpleQRegister::print() {
+void SharedQSimpleQRegister::print() const{
     std::vector<mcomplex> fullReg = getAllReg();
     if (!ParallelSubSystemHelper::getConfig().rank)
     {
@@ -282,7 +283,7 @@ double SharedQSimpleQRegister::getLocalNorm() const {
     return sum;
 }
 
-void SharedQSimpleQRegister::printNorm() {
+void SharedQSimpleQRegister::printNorm() const {
     //std::vector<mcomplex> fullReg = getAllReg();
     double localNorm = getLocalNorm();
     double globalNorm = 0.0;

@@ -2,11 +2,15 @@
 #define COMMON_H
 #include "qmatrix.h"
 #include "qregister.h"
-
+#include "qmath.h"
+#include <icommonworld.h>
 
 void log_init_reg(int m_w);
 void log_print();
 void log_reinit_reg(int new_mw);
+
+extern ICommonWorld * gWorld;
+
 
 QMatrix & loadFromXml(const std::string &fname);
 //int set_bit(state x, unsigned char id, int val);

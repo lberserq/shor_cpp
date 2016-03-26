@@ -1,10 +1,7 @@
 ﻿#include "config.h"
 #include "common.h"
 #include "qregister.h"
-#include "qft.h"
-#include "measure.h"
-#include "multiplier.h"
-#include "adder.h"
+#include "common_lib.h"
 #include <cstdio>
 #include <cstdlib>
 #define GT
@@ -276,20 +273,34 @@ void xml_test() {
     std::cout << resV[0].toString();
 }
 
+ICommonWorld *gWorld = NULL;
+#include "common_impl.h"
+
+INoiseProvider * CreateNoiseProvider(const std::string &filename)
+{
+    return CreateNoiseProviderStrDimImpl<NoNoiseImpl, CraussNoiseDensityImpl>(filename, 0);
+}
+
 void userInit() {
     MPI_Init(NULL, NULL);
+    INoiseProvider *noiseProvider = CreateNoiseProvider("fname");
+    gWorld = new CommonWorld<NUMAGatesImpl>(noiseProvider);
 }
 
 
 void userFinalize() {
+    if (gWorld) {
+        delete gWorld;
+    }
     MPI_Finalize();
 }
 
 int main(int argc, char *argv[])
 {
     xml_test();
-    //userInit();
-    //    gates_test();
+    userInit();
+        gates_test();
+        userFinalize();
     return 0;
 
     if (argc < 2) {

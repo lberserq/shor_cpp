@@ -2,7 +2,9 @@
 #include "common.h"
 #include "config.h"
 #include <vector>
+#if (__cplusplus >= 201103L)
 #include <unordered_map>
+#endif
 #include <algorithm>
 #include <set>
 #include <mpi.h>
@@ -17,7 +19,7 @@
  * \brief m_text
  */
 static std::vector<std::string> m_text;
-void log_init_reg(int m_w) {
+/*void log_init_reg(int m_w) {
     m_text.clear();
     m_text.resize(2 * m_w + 1);
     for (unsigned i = 1; i < m_text.size(); i += 2) {
@@ -144,7 +146,7 @@ void log_print()
         //std::fprintf(stderr, "%s\n",it.c_str());
         std::cerr << it << std::endl;
     }
-}
+}*/
 
 ParallelSubSystemHelper::mpicfg ParallelSubSystemHelper::getConfig() {
     ParallelSubSystemHelper::mpicfg cfg;
@@ -153,32 +155,9 @@ ParallelSubSystemHelper::mpicfg ParallelSubSystemHelper::getConfig() {
     return cfg;
 }
 
-
-
-
-//namespace simpleNoiseNoParallelWorld {
-
-int get_bit(state x, int id) {
-    return (x >> id) & 1;
-}
-
-int set_bit(state x, unsigned char id, int val) {
-    switch (val) {
-    case 0:
-        x &= ~(1 << id);
-        break;
-    case 1:
-        x |= (1 << id);
-        break;
-    default:
-        break;
-    }
-    return x;
-}
-
 void ApplyCRot(IQRegister &reg, int id1, int id2, double alpha)
 {
-    std::set<int> m_s; m_s.insert(id1); m_s.insert(id2); log_str(m_s);
+    //std::set<int> m_s; m_s.insert(id1); m_s.insert(id2); log_str(m_s);
 
     mcomplex mult = std::exp(mcomplex(0, alpha));
     QMatrix m(4, 4);
@@ -302,7 +281,7 @@ void ApplyFToffoli(IQRegister &/*reg*/, int /*id0*/, int /*id1*/, int /*id2*/)
     //    }
 }
 
-namespace OpenMPQuantumOperations
+/*namespace OpenMPQuantumOperations
 {
     void ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
     {
@@ -416,10 +395,11 @@ namespace OpenMPQuantumOperations
     }
 
 }//end of OpenMPQuantumOperations
+*/
 
 void ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
 {
-    MPI_Barrier(MPI_COMM_WORLD);
+/*    MPI_Barrier(MPI_COMM_WORLD);
     QMatrix resm = m;
 #ifdef USE_NOISE
     resm = resm * genNoise(1);
@@ -509,7 +489,9 @@ void ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
         }
     }
     reg.setStates(ampls);
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);*/
+
+    gWorld->GetGatesProvider()->ApplyQbitMatrix(m, reg, id0);
 }
 /* 000 - 1
  * 001 - 1
@@ -527,7 +509,8 @@ void ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
  */
 void ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1)
 {
-    MPI_Barrier(MPI_COMM_WORLD);
+/*
+ *  MPI_Barrier(MPI_COMM_WORLD);
     QMatrix resm = m;
 #ifdef USE_NOISE
     resm = resm * genNoise(2);
@@ -635,13 +618,15 @@ void ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1)
     }
     reg.setStates(ampls);
     MPI_Barrier(MPI_COMM_WORLD);
-
+    */
+    gWorld->GetGatesProvider()->ApplyDiQbitMatrix(m, reg, id0, id1);
 }
 
 
 void ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1, int id2)
 {
-    MPI_Barrier(MPI_COMM_WORLD);
+/*
+ *  MPI_Barrier(MPI_COMM_WORLD);
     QMatrix resm = m;
 #ifdef USE_NOISE
     resm = resm * genNoise(3);
@@ -776,6 +761,8 @@ void ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1, int
     }
     reg.setStates(ampls);
     MPI_Barrier(MPI_COMM_WORLD);
+    */
+    gWorld->GetGatesProvider()->ApplyTriQbitMatrix(m, reg,  id0, id1, id2);
 }
 
 

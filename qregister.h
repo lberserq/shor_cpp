@@ -18,11 +18,11 @@ public:
     virtual size_t getStatesSize() const  = 0;
     virtual void allocSharedMem(int width) = 0;
     virtual void collapseState(int id, long double amplProb) = 0;
-    virtual void print() = 0;
-    virtual void printNorm() = 0;
+    virtual void print() const = 0 ;
+    virtual void printNorm() const = 0;
     virtual size_t getOffset() const = 0;
     virtual double getLocalNorm() const = 0;
-    virtual std::vector<mcomplex> getAllReg() = 0;
+    virtual std::vector<mcomplex> getAllReg() const = 0;
     virtual ~IQRegister();
 };
 
@@ -39,12 +39,13 @@ public:
     size_t getStatesSize() const;
     void allocSharedMem(int width);
     void collapseState(int id, long double amplProb);
-    void print();
-    void printNorm();
+    void print() const;
+    void printNorm() const;
     size_t getOffset() const;
     double getLocalNorm() const;
-    std::vector<mcomplex> getAllReg();
+    std::vector<mcomplex> getAllReg() const;
 };
+
 namespace ParallelSubSystemHelper
 {
     struct mpicfg;
@@ -65,13 +66,15 @@ public:
     size_t getStatesSize() const;
     void allocSharedMem(int width);
     void collapseState(int id, long double amplProb);
-    void print();
-    void printNorm();
+    void print() const;
+    void printNorm() const;
     size_t getOffset() const;
     double getLocalNorm() const;
-    std::vector<mcomplex> getAllReg();
+    std::vector<mcomplex> getAllReg() const;
 
 };
+
+
 
 namespace QRegHelpers {
     void RegSwapLR(int width, IQRegister &in);
