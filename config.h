@@ -8,6 +8,7 @@ enum
     };
 const double g_eps = 1e-8;
 typedef unsigned long long state;
+typedef state uint_type;
 #include <complex>
 #include <iterator>
 typedef  double real_t;
@@ -101,10 +102,21 @@ namespace ParallelSubSystemHelper {
     }
 
 
+#if __cplusplus >=  201103L
+#include <memory>
+#define service_ptr_t std::shared_ptr
+#else
+#include <memory>
+#define service_ptr_t std::auto_ptr
+#endif
+
+
+
 #define reduce_helper
 
 #define q_log(x) dumpVar(x, 0)
-extern void *g_Root;
+struct ICommonWorld;
+extern service_ptr_t<ICommonWorld> g_Root;
 
 extern void userInit();
 class StaticQRegister;
@@ -117,5 +129,9 @@ enum
 };
 
 #define make_error(err)
+
+typedef uint_type int_t;
+typedef std::string str_t;
+typedef std::complex<real_t> complex_t;
 
 #endif // CONFIG_H

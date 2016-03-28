@@ -4,24 +4,21 @@
 template <class IGatesProvider>
 class CommonWorld: public ICommonWorld
 {
-    IGates *m_gatesprovider;
-    INoiseProvider *m_noiseprovider;
+    service_ptr_t<IGates> m_gatesprovider;
+    service_ptr_t<INoiseProvider> m_noiseprovider;
 public:
-    CommonWorld(INoiseProvider *noiseProvider) : m_noiseprovider(noiseProvider){
-        m_gatesprovider = new IGatesProvider();
+    CommonWorld(INoiseProvider *noiseProvider)
+        : m_gatesprovider(service_ptr_t<IGates>(new IGatesProvider()))
+        , m_noiseprovider(noiseProvider) {
     }
 
+
     IGates *GetGatesProvider() {
-        return m_gatesprovider;
+        return m_gatesprovider.get();
     }
 
     INoiseProvider *GetNoiseProvider() {
-        return m_noiseprovider;
-    }
-
-    ~CommonWorld() {
-        delete m_gatesprovider;
-        delete m_noiseprovider;
+        return m_noiseprovider.get();
     }
 
 };

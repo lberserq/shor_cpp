@@ -54,4 +54,6 @@ HEADERS += \
     commonworld.h \
     icommonworld.h \
     common_impl.h \
-    qmath.h
+    qmath.h \
+    qscript_stubs.h \
+    cvariant.h

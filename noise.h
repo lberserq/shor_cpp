@@ -38,11 +38,11 @@ public:
     void ApplyNoiseForDensityMatrix(IQRegister &reg);
 };
 
-class SimpleNoisProvider : public INoiseProvider {
+class SimpleNoiseProvider : public INoiseProvider {
     IDensityMatrixNoise *m_densNoise;
     IOperatorNoise *m_opNoise;
 public:
-    SimpleNoisProvider(IDensityMatrixNoise * densNoise,
+    SimpleNoiseProvider(IDensityMatrixNoise * densNoise,
                        IOperatorNoise * opNoise) : m_densNoise(densNoise), m_opNoise(opNoise)
     {}
     IOperatorNoise * GetOperatorNoise() {
@@ -52,16 +52,32 @@ public:
     IDensityMatrixNoise * GetDensityMatrixNoise() {
         return m_densNoise;
     }
+    ~SimpleNoiseProvider() {
+        if (m_opNoise) {
+            delete m_opNoise;
+        }
+        if (m_densNoise) {
+            delete m_densNoise;
+        }
+    }
 
 };
 
+class NoiseDensityStub: public IDensityMatrixNoise
+{
+public:
+    NoiseDensityStub(const std::string &, int) {}
+    void ApplyNoiseForDensityMatrix(IQRegister &) {}
+};
+
+
 template<class NoiseOp, class NoiseDens> INoiseProvider * CreateNoiseProviderStrImpl(const std::string &filename) {
-    return new SimpleNoisProvider(new NoiseDens(filename), new NoiseOp());
+    return new SimpleNoiseProvider(new NoiseDens(filename), new NoiseOp());
 }
 
 
 template<class NoiseOp, class NoiseDens> INoiseProvider * CreateNoiseProviderStrDimImpl(const std::string &filename, int dim) {
-    return new SimpleNoisProvider(new NoiseDens(filename, dim), new NoiseOp());
+    return new SimpleNoiseProvider(new NoiseDens(filename, dim), new NoiseOp());
 }
 
 

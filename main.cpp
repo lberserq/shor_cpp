@@ -4,6 +4,7 @@
 #include "common_lib.h"
 #include <cstdio>
 #include <cstdlib>
+#include <qmath.h>
 #define GT
 #define STATS_ONLY
 
@@ -36,16 +37,6 @@ void gates_test() {
 }
 #endif
 
-state igcd(state a, state b) {
-    while (a && b) {
-        if (a > b) {
-            a %= b;
-        } else {
-            b %= a;
-        }
-    }
-    return (a) ? a : b;
-}
 state ipow(state base, int exp) {
     state res = 1;
     for (int i = 0; i < exp; i++, res *= base);
@@ -62,36 +53,7 @@ int get_dim(state n) {
 
 
 
-std::pair<state, state> con_frac_approx(long double val, long double maxdenum) {
-    long long numerator = 1, denumerator = 0;
-    state numlast = 0, denumlast = 1;
-    //const float interpolation_step = g_eps * 1e4 * 5;
-    long double ai = val;
-    long double step = 0.0f;
-    do {
-        step = ai + 0.000005;
-        step = std::floor(step);
-        ai -= step - 0.0010005;
-        ai = 1.0f / ai;
-        if (step * denumerator + denumlast > maxdenum) {
-            break;
-        }
-        state  savenum = numerator;
-        state savedenum = denumerator;
-        numerator = step * numerator + numlast;
-        denumerator = step * denumerator + denumlast;
-        numlast = savenum;
-        denumlast = savedenum;
-    }while(std::fabs(static_cast<long double>(numerator) / denumerator - val) > 1.0 / (2.0 * maxdenum));
 
-
-    if (numerator < 0 && denumerator < 0) {
-        numerator = -numerator;
-        denumerator = -denumerator;
-    }
-    std::pair<state, state> res = std::make_pair(numerator, denumerator);
-    return res;
-}
 
 
 
@@ -112,19 +74,15 @@ enum
  *
  */
 
-void init_rand() {
-    srand(time(NULL));
-    srand48(time(NULL));
-}
 
-int shor(int n) {
+int shor(uint_type n) {
     init_rand();
     //    if (n == 18) {
     //        n = 17 + 1;
     //    }
     int all_width = get_dim(n * n);
     int width_local = get_dim(n);
-    printf("Factorization of %d\n", n);
+    printf("Factorization of %llu\n", n);
     fprintf(stderr, "w %d sw %d\n", all_width, width_local);
     int local_variables_size = 3 * width_local + 2;
     printf("We need %d qbits\n", all_width + 3 * width_local);
@@ -151,15 +109,15 @@ int shor(int n) {
 
 
         MPI_Barrier(MPI_COMM_WORLD);
-        int a = xGenIrand() % n;
-        while (igcd(a, n) > 1 || a < 2) {
+        uint_type a = xGenIrand() % n;
+        while (QMath::gcd(a, n) > 1 || a < 2) {
             a = xGenIrand() % n;
             q_log("GCD ITERATION");
         }
         MPI_Barrier(MPI_COMM_WORLD);
 
 //        int a = n + 1;
-        fprintf(stderr, "New Round %d of %d \n RANDOM NUMBER == %d\n", tick_count, MAX_TICK_COUNT, a);
+        fprintf(stderr, "New Round %d of %d \n RANDOM NUMBER == %llu\n", tick_count, MAX_TICK_COUNT, a);
         //Apply Uf
         q_log("IGCD");
         expamodn(*tmp, n, a, all_width, width_local);
@@ -206,11 +164,11 @@ int shor(int n) {
             continue;
         }
 
-        long double val = static_cast<double>(m_state) / static_cast<state>(1 << all_width);
+        //long double val = static_cast<double>(m_state) / static_cast<state>(1 << all_width);
         fprintf(stderr, "MESVAL == %llu / %llu \n", m_state, static_cast<state>(1 << all_width));
-        std::pair<state, state> frac = con_frac_approx(val, static_cast<long double>(1 << all_width));
-        fprintf(stderr, "SIMPLIFIER %llu / %llu\n", frac.first, frac.second);
-        if (frac.second % 2 == 1) {
+        std::vector<uint_type> frac = QMath::fracApprox(m_state, all_width, all_width);
+        fprintf(stderr, "SIMPLIFIER %llu / %llu\n", frac[0], frac[1]);
+        if (frac[1] % 2 == 1) {
             fprintf(stdout, "Unfortunately, but denumerator is odd next round\n");
             q_log("Unfortunately, but denumerator is odd next round");
 
@@ -218,15 +176,15 @@ int shor(int n) {
             continue;
         }
         delete tmp;
-        state del0 = ipow(a, frac.second / 2) + 1;
+        uint_type del0 = QMath::gcd(static_cast<state>(a), frac[1] / 2) + 1;
 
-        state del1 = del0 - 2; // also == ipow(a, frac.second / 2) - 1;
+        uint_type del1 = del0 - 2; // also == ipow(a, frac.second / 2) - 1;
         del0 = del0 % n;
         del1 = del1 % n;
-        int div1 = igcd(n, del0);
-        int div2 = igcd(n, del1);
+        uint_type div1 = QMath::gcd(n, del0);
+        uint_type div2 = QMath::gcd(n, del1);
         if (div1 > 1 && div1 != n) {
-            fprintf(stderr, "Lucky round divisors `ve been found %d * %d == %d\n", n / div1, div1, n);
+            fprintf(stderr, "Lucky round divisors `ve been found %llu * %llu == %llu\n", n / div1, div1, n);
             q_log("Lucky round divisors `ve been found");
             q_log(n / div1);
             q_log(div1);
@@ -234,7 +192,7 @@ int shor(int n) {
 
             return tick_count;
         } else if (div2 > 1 && div2 != n) {
-            fprintf(stderr, "Lucky round divisors `ve been found %d * %d == %d\n", n / div2, div2, n);
+            fprintf(stderr, "Lucky round divisors `ve been found %llu * %llu == %llu\n", n / div2, div2, n);
             q_log("Lucky round divisors `ve been found");
             q_log(n / div2);
             q_log(div2);
@@ -247,7 +205,7 @@ int shor(int n) {
         }
 
     }
-    fprintf(stderr, "Cant find divisors with %d iterations, maybe %d is prime ?", MAX_TICK_COUNT, n);
+    fprintf(stderr, "Cant find divisors with %d iterations, maybe %llu is prime ?", MAX_TICK_COUNT, n);
 
     q_log("Cant find divisors with");
     q_log(MAX_TICK_COUNT);
@@ -273,34 +231,34 @@ void xml_test() {
     std::cout << resV[0].toString();
 }
 
-ICommonWorld *gWorld = NULL;
+service_ptr_t<ICommonWorld> gWorld;
 #include "common_impl.h"
 
 INoiseProvider * CreateNoiseProvider(const std::string &filename)
 {
-    return CreateNoiseProviderStrDimImpl<NoNoiseImpl, CraussNoiseDensityImpl>(filename, 0);
+    return CreateNoiseProviderStrDimImpl<NoNoiseImpl, NoiseDensityStub>(filename, 0);
 }
 
 void userInit() {
     MPI_Init(NULL, NULL);
     INoiseProvider *noiseProvider = CreateNoiseProvider("fname");
-    gWorld = new CommonWorld<NUMAGatesImpl>(noiseProvider);
+    gWorld = service_ptr_t<ICommonWorld>(new CommonWorld<NUMAGatesImpl>(noiseProvider));
 }
 
 
 void userFinalize() {
-    if (gWorld) {
-        delete gWorld;
-    }
     MPI_Finalize();
 }
 
+service_ptr_t<IQRegister> gRegister;
+#include <qscript_stubs.h>
 int main(int argc, char *argv[])
 {
     xml_test();
     userInit();
         gates_test();
         userFinalize();
+    QStubs::VectorSize<UserDefQRegister>(0);
     return 0;
 
     if (argc < 2) {
@@ -313,7 +271,6 @@ int main(int argc, char *argv[])
             MPI_Barrier(MPI_COMM_WORLD);
             shor(n);
             MPI_Barrier(MPI_COMM_WORLD);
-            freopen("scheme.txt", "w", stderr);
         }
         //test();
     }

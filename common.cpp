@@ -8,6 +8,9 @@
 #include <algorithm>
 #include <set>
 #include <mpi.h>
+#include <qmath.h>
+
+complex_t QMath::i = complex_t(0, 1);
 
 /*!
   intent draw operators like a tex

@@ -2,23 +2,40 @@
 #define COMMON_H
 #include "qmatrix.h"
 #include "qregister.h"
-#include "qmath.h"
 #include <icommonworld.h>
+#include <cstdlib>
 
 void log_init_reg(int m_w);
 void log_print();
 void log_reinit_reg(int new_mw);
 
-extern ICommonWorld * gWorld;
 
+extern service_ptr_t<ICommonWorld> gWorld;
 
 QMatrix & loadFromXml(const std::string &fname);
 //int set_bit(state x, unsigned char id, int val);
 //int getbit(state x, int id);
 extern double errorLevel;
 
-double xGenDrand();
-int xGenIrand();
+extern double xGenDrand();
+extern int xGenIrand();
+
+namespace {
+    void init_rand() {
+        srand(time(NULL));
+        srand48(time(NULL));
+    }
+
+
+    template<typename T>
+    inline str_t X_MAKESTR(const T &val) {
+        std::stringstream sin;
+        sin << val;
+        return sin.str();
+
+    }
+
+}
 
 
 

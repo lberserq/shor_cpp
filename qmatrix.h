@@ -3,7 +3,7 @@
 #include "config.h"
 class QMatrix
 {
-    mcomplex ** data_ptr;
+    complex_t ** data_ptr;
     int rows_cnt;
     int columns_cnt;
 public:

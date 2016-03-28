@@ -52,7 +52,9 @@ QMatrix CraussNoiseImpl::GenNoisyMatrix(const QMatrix &m)
     }
     return res;
 }
-extern ICommonWorld *gWorld;
+
+
+extern service_ptr_t<ICommonWorld> gWorld;
 
 CraussNoiseDensityImpl::CraussNoiseDensityImpl(const std::string &fileName, int dim):
     m_dim(dim)

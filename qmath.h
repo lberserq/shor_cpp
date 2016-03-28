@@ -2,7 +2,7 @@
 #define QMATH_H
 #include <cmath>
 #include "config.h"
-
+#include <common.h>
 #define X_DECLARE_TEMPLATE_MATH_1(__name)\
     template<class T>  T __name(const T&x) {\
         return std::__name(x);\
@@ -63,6 +63,71 @@ namespace QMath
   X_DECLARE_TEMPLATE_MATH_1(tanh)
 
 
+  extern complex_t i;
+
+  template <class T> inline T gcd(T a, T b) {
+      while (a && b) {
+          if (a > b) {
+              a %= b;
+          } else {
+              b %= a;
+          }
+      }
+      return (a) ? a : b;
+  }
+
+
+  inline std::vector<uint_type> fracApprox(uint_type c, uint_type q,  uint_type width) {
+      long double maxdenum = 1.0 / static_cast<long double>(width);
+      long double val = static_cast<long double>(c) / q;
+      long long numerator = 1, denumerator = 0;
+      state numlast = 0, denumlast = 1;
+      //const float interpolation_step = g_eps * 1e4 * 5;
+      long double ai = val;
+      long double step = 0.0f;
+      do {
+          step = ai + 0.000005;
+          step = std::floor(step);
+          ai -= step - 0.0010005;
+          ai = 1.0f / ai;
+          if (step * denumerator + denumlast > maxdenum) {
+              break;
+          }
+          state  savenum = numerator;
+          state savedenum = denumerator;
+          numerator = step * numerator + numlast;
+          denumerator = step * denumerator + denumlast;
+          numlast = savenum;
+          denumlast = savedenum;
+      }while(std::fabs(static_cast<long double>(numerator) / denumerator - val) > 1.0 / (2.0 * maxdenum));
+
+
+      if (numerator < 0 && denumerator < 0) {
+          numerator = -numerator;
+          denumerator = -denumerator;
+      }
+      std::vector<uint_type> res;
+      res.push_back(numerator);
+      res.push_back(denumerator);
+      return res;
+  }
+
+  inline double random() {
+      return ::xGenDrand();
+  }
+
+  inline uint_type getWidth(uint_type n) {
+      uint_type i = 0;
+      while (static_cast<uint_type>(1<< i) < n) {
+          i++;
+      }
+      return i;
+  }
+
+  inline uint_type ipow(int a, int b)
+  {
+      return std::pow(a, b);
+  }
 
 
 

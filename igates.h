@@ -14,7 +14,7 @@ struct IGates {
     virtual void ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1) = 0;
 
     /*!
-    *\fn applies Unitary complex matrix m(8x9) to register reg on 3 qubits specified in id0 id1 id2\n
+    *\fn applies Unitary complex matrix m(8x8) to register reg on 3 qubits specified in id0 id1 id2\n
     */
     virtual void ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1, int id2) = 0;
     virtual ~IGates(){}
