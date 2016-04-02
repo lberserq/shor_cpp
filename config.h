@@ -129,8 +129,11 @@ enum
 };
 
 #define make_error(err)
-
-typedef uint_type int_t;
+#ifdef INT_T_IS_INT
+typedef int int_t
+#else
+typedef long long int_t;
+#endif
 typedef std::string str_t;
 typedef std::complex<real_t> complex_t;
 

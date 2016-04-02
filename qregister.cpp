@@ -9,7 +9,9 @@ IQRegister::~IQRegister() {
 
 }
 
-StaticQRegister::StaticQRegister(int width, state startState, const mcomplex &amplitude): m_width(width)
+StaticQRegister::StaticQRegister(int width, state startState, const mcomplex &amplitude, representation_t mode):
+    m_width(width),
+    m_representation(mode)
 {
     m_states.resize(static_cast<state>(1 << width));
     m_states[startState] = amplitude;
@@ -111,6 +113,10 @@ void StaticQRegister::collapseState(int id, long double amplProb) {
 }
 
 
+representation_t StaticQRegister::getRepresentation() const {
+    return m_representation;
+}
+
 void StaticQRegister::print() const
 {
     MPI_Barrier(MPI_COMM_WORLD);
@@ -159,7 +165,10 @@ size_t StaticQRegister::getOffset() const {
 }
 
 
-SharedQSimpleQRegister::SharedQSimpleQRegister(int width, state startState, const mcomplex &amplitude): m_global_width(width) {
+SharedQSimpleQRegister::SharedQSimpleQRegister(int width, state startState, const mcomplex &amplitude, representation_t mode):
+    m_representation(mode),
+    m_global_width(width)
+{
     m_cfg = ParallelSubSystemHelper::getConfig();
     m_localstates.resize(static_cast<state>(1 << width) / m_cfg.size);
     m_local_size = m_localstates.size();
@@ -293,6 +302,10 @@ void SharedQSimpleQRegister::printNorm() const {
     }
 }
 
+representation_t SharedQSimpleQRegister::getRepresentation() const {
+    return m_representation;
+}
+
 
 void SharedQSimpleQRegister::collapseState(int id, long double amplProb) {
     long double sum = 0.0f;
@@ -367,9 +380,7 @@ void SharedQSimpleQRegister::collapseState(int id, long double amplProb) {
 
 namespace QRegHelpers {
 
-
-
-    static void DeleteVar(IQRegister &reg, int id)
+    void DeleteVar(IQRegister &reg, int id)
     {
         long double probs = 0.0f;
         state m_sz = reg.getStates().size();

@@ -494,7 +494,22 @@ void ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
     reg.setStates(ampls);
     MPI_Barrier(MPI_COMM_WORLD);*/
 
-    gWorld->GetGatesProvider()->ApplyQbitMatrix(m, reg, id0);
+    QMatrix mEfficient = m;
+    if (gWorld->GetNoiseProvider()->GetOperatorNoise()) {
+        mEfficient = gWorld->GetNoiseProvider()->GetOperatorNoise()->GenNoisyMatrix(m);
+    }
+
+    gWorld->GetGatesProvider()->ApplyQbitMatrix(mEfficient, reg, id0);
+
+    if (reg.getRepresentation() != REG_REPRESENTATION) {
+        gWorld->GetGatesProvider()->ApplyQbitMatrix(mEfficient.conj(), reg,
+                                                    id0 + reg.getWidth() / 2);
+    }
+
+    if (gWorld->GetNoiseProvider()->GetDensityMatrixNoise()
+            && reg.getRepresentation() == MATRIX_REPRESENTATION) {
+        gWorld->GetNoiseProvider()->GetDensityMatrixNoise()->ApplyNoiseForDensityMatrix(reg);
+    }
 }
 /* 000 - 1
  * 001 - 1
@@ -622,7 +637,25 @@ void ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1)
     reg.setStates(ampls);
     MPI_Barrier(MPI_COMM_WORLD);
     */
-    gWorld->GetGatesProvider()->ApplyDiQbitMatrix(m, reg, id0, id1);
+
+    QMatrix mEfficient = m;
+    if (gWorld->GetNoiseProvider()->GetOperatorNoise()) {
+        mEfficient = gWorld->GetNoiseProvider()->GetOperatorNoise()->GenNoisyMatrix(m);
+    }
+
+
+    gWorld->GetGatesProvider()->ApplyDiQbitMatrix(mEfficient, reg, id0, id1);
+
+    if (reg.getRepresentation() != REG_REPRESENTATION) {
+        gWorld->GetGatesProvider()->ApplyDiQbitMatrix(mEfficient.conj(), reg,
+                                                      id0 + reg.getWidth() / 2,
+                                                      id1 + reg.getWidth() / 2);
+    }
+
+    if (gWorld->GetNoiseProvider()->GetDensityMatrixNoise()
+            && reg.getRepresentation() == MATRIX_REPRESENTATION) {
+        gWorld->GetNoiseProvider()->GetDensityMatrixNoise()->ApplyNoiseForDensityMatrix(reg);
+    }
 }
 
 
@@ -765,7 +798,25 @@ void ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1, int
     reg.setStates(ampls);
     MPI_Barrier(MPI_COMM_WORLD);
     */
-    gWorld->GetGatesProvider()->ApplyTriQbitMatrix(m, reg,  id0, id1, id2);
+    QMatrix mEfficient = m;
+    if (gWorld->GetNoiseProvider()->GetOperatorNoise()) {
+        mEfficient = gWorld->GetNoiseProvider()->GetOperatorNoise()->GenNoisyMatrix(m);
+    }
+
+
+    gWorld->GetGatesProvider()->ApplyTriQbitMatrix(mEfficient, reg,  id0, id1, id2);
+
+    if (reg.getRepresentation() != REG_REPRESENTATION) {
+        gWorld->GetGatesProvider()->ApplyTriQbitMatrix(mEfficient.conj(), reg,
+                                                      id0 + reg.getWidth() / 2,
+                                                      id1 + reg.getWidth() / 2,
+                                                      id2 + reg.getWidth() / 2);
+    }
+
+    if (gWorld->GetNoiseProvider()->GetDensityMatrixNoise()
+            && reg.getRepresentation() == MATRIX_REPRESENTATION) {
+        gWorld->GetNoiseProvider()->GetDensityMatrixNoise()->ApplyNoiseForDensityMatrix(reg);
+    }
 }
 
 

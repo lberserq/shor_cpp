@@ -4,6 +4,7 @@
 #include <cvariant.h>
 #include <qmath.h>
 #include <qft.h>
+#include <multiplier.h>
 extern service_ptr_t<IQRegister> gRegister;
 namespace QStubs
 {
@@ -11,7 +12,7 @@ namespace QStubs
         gRegister = service_ptr_t<IQRegister>(new T(width, 0));
     }
 
-    inline void PrintStub(cVariant &x) {
+    inline void PrintStub(const cVariant &x) {
         q_log(x.toString());
     }
 
@@ -46,10 +47,10 @@ namespace QStubs
     }
 
 
-    QMatrix DeclareMatrix4(const std::vector<cVariant> &tuple) {
+    inline QMatrix DeclareMatrix4(const std::vector<cVariant> &tuple) {
         std::vector<complex_t> tupleVal;
         for (size_t i = 0; i < tuple.size(); ++i) {
-            tupleVal.push_back(tuple[i]);
+            tupleVal.push_back(tuple[i].get<complex_t>());
         }
 
         const int dim = 2;
@@ -65,10 +66,10 @@ namespace QStubs
 
 
 
-    QMatrix DeclareMatrix16(const std::vector<cVariant> &tuple) {
+    inline QMatrix DeclareMatrix16(const std::vector<cVariant> &tuple) {
         std::vector<complex_t> tupleVal;
         for (size_t i = 0; i < tuple.size(); ++i) {
-            tupleVal.push_back(tuple[i]);
+            tupleVal.push_back(tuple[i].get<complex_t>());
         }
         const int dim = 4;
 
@@ -83,10 +84,10 @@ namespace QStubs
 
 
 
-    QMatrix DeclareMatrix16(const std::vector<cVariant> &tuple) {
+    inline QMatrix DeclareMatrix64(const std::vector<cVariant> &tuple) {
         std::vector<complex_t> tupleVal;
         for (size_t i = 0; i < tuple.size(); ++i) {
-            tupleVal.push_back(tuple[i]);
+            tupleVal.push_back(tuple[i].get<complex_t>());
         }
         const int dim = 8;
 
@@ -137,14 +138,6 @@ namespace QStubs
         for (size_t i = 0; i < static_cast<size_t>(width); ++i) {
             idx.push_back(start + i);
         }
-        QFT::ApplyQFT(*gRegister.get(), idx);
-    }
-
-    inline void QFT(int start, int width) {
-        std::vector<int> idx;
-        for (size_t i = 0; i < static_cast<size_t>(width); ++i) {
-            idx.push_back(start + i);
-        }
         QFT::ApplyQFT(*gRegister.get(), width, idx);
     }
 
@@ -155,6 +148,16 @@ namespace QStubs
         }
         QFT::ApplyQFTInv(*gRegister.get(), width, idx);
     }
+
+    inline void MeasureBit(int i) {
+        QRegHelpers::DeleteVar(*gRegister.get(), i);
+    }
+
+    inline void ExpModN(int x, int N, int width) {
+        ::expamodn(*gRegister.get(), N, x, gRegister->getWidth(), width);
+    }
+
+
 
 
 }
