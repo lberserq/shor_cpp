@@ -13,7 +13,11 @@ namespace QStubs
     }
 
     inline void PrintStub(const cVariant &x) {
-        q_log(x.toString());
+        if (ParallelSubSystemHelper::isInited()) {
+            q_log(x.toString());
+        } else {
+            std::cerr << x.toString() << std::endl;
+        }
     }
 
     inline void Hadamard(int id1) {
@@ -158,9 +162,19 @@ namespace QStubs
     }
 
 
-
+}
+namespace QMath {
+    inline std::vector<cVariant> fracApprox(uint_type c, uint_type q,  uint_type width)
+    {
+        std::vector<uint_type> res = conFracApprox(c, q, width);
+        std::vector<cVariant> resV;
+        resV.push_back(res[0]);
+        resV.push_back(res[1]);
+        return resV;
+    }
 
 }
+
 
 #endif // QSCRIPT_STUBS_H
 

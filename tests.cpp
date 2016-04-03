@@ -13,6 +13,7 @@ extern "C" {
 }
 #include <cstdio>
 
+//typedef UserDefQRegister SharedQSimpleQRegister;
 extern "C"
 {
 void add_mod_n(int N,int a,int width, quantum_reg *reg);

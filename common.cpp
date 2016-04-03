@@ -158,6 +158,16 @@ ParallelSubSystemHelper::mpicfg ParallelSubSystemHelper::getConfig() {
     return cfg;
 }
 
+#include <icommonworld.h>
+#include <gatesimpl.h>
+bool ParallelSubSystemHelper::isInited()
+{
+    if (gWorld->GetGatesProvider()) {
+        return (dynamic_cast<NUMAGatesImpl *>(gWorld->GetGatesProvider()) != NULL);
+    }
+    return false;
+}
+
 void ApplyCRot(IQRegister &reg, int id1, int id2, double alpha)
 {
     //std::set<int> m_s; m_s.insert(id1); m_s.insert(id2); log_str(m_s);

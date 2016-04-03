@@ -50,6 +50,24 @@ inline int set_bit(state x, unsigned char id, int val) {
 
 
 
+#if __cplusplus >=  201103L
+#include <memory>
+#define service_ptr_t std::shared_ptr
+#else
+#include <memory>
+#define service_ptr_t std::auto_ptr
+#endif
+
+struct ICommonWorld;
+extern service_ptr_t<ICommonWorld> gWorld;
+
+extern void userInit();
+class StaticQRegister;
+class SharedQSimpleQRegister;
+typedef StaticQRegister UserDefQRegister;
+
+
+
 namespace ParallelSubSystemHelper {
     struct mpicfg {
         int rank;
@@ -58,6 +76,7 @@ namespace ParallelSubSystemHelper {
     };
 
     mpicfg getConfig();
+    bool isInited();
 /*    void AllreduceHelper(long double &val, MPI_Op op) {
         long double gval = 0;
         if (getConfig().size) {
@@ -66,6 +85,10 @@ namespace ParallelSubSystemHelper {
         val = gval;
     }*/
 }
+
+
+
+
 #define dumpvec(vec, Rank) \
 {\
     MPI_Barrier(MPI_COMM_WORLD);\
@@ -102,26 +125,11 @@ namespace ParallelSubSystemHelper {
     }
 
 
-#if __cplusplus >=  201103L
-#include <memory>
-#define service_ptr_t std::shared_ptr
-#else
-#include <memory>
-#define service_ptr_t std::auto_ptr
-#endif
-
 
 
 #define reduce_helper
 
 #define q_log(x) dumpVar(x, 0)
-struct ICommonWorld;
-extern service_ptr_t<ICommonWorld> g_Root;
-
-extern void userInit();
-class StaticQRegister;
-class SharedQSimpleQRegister;
-typedef SharedQSimpleQRegister UserDefQRegister;
 
 enum
 {

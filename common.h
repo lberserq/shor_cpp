@@ -3,6 +3,7 @@
 #include "qmatrix.h"
 #include "qregister.h"
 #include <icommonworld.h>
+#include <measure.h>
 #include <cstdlib>
 
 void log_init_reg(int m_w);

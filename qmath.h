@@ -50,7 +50,7 @@ namespace QMath
   X_DECLARE_TEMPLATE_MATH_1(cosh)
   X_DECLARE_TEMPLATE_MATH_1(exp)
   X_DECLARE_TEMPLATE_MATH_1(fabs)
-  X_DECLARE_TEMPLATE_MATH_1(floor)
+  //X_DECLARE_TEMPLATE_MATH_1(floor)
   X_DECLARE_TEMPLATE_MATH_1(fmod)
   X_DECLARE_TEMPLATE_MATH_1(ldexp)
   X_DECLARE_TEMPLATE_MATH_2(log)
@@ -62,6 +62,18 @@ namespace QMath
   X_DECLARE_TEMPLATE_MATH_1(tan)
   X_DECLARE_TEMPLATE_MATH_1(tanh)
 
+//  template<class T> int floor(T x) {
+//    return std::floor(x);
+//  }
+
+
+//  template<class T> long floor(T x) {
+//    return std::floor(x);
+//  }
+
+  template<class T> long long floor(T x) {
+    return std::floor(x);
+  }
 
   extern complex_t i;
 
@@ -77,7 +89,9 @@ namespace QMath
   }
 
 
-  inline std::vector<uint_type> fracApprox(uint_type c, uint_type q,  uint_type width) {
+
+
+  inline std::vector<uint_type> conFracApprox(uint_type c, uint_type q,  uint_type width) {
       long double maxdenum = 1.0 / static_cast<long double>(width);
       long double val = static_cast<long double>(c) / q;
       long long numerator = 1, denumerator = 0;
