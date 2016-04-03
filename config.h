@@ -64,7 +64,7 @@ extern service_ptr_t<ICommonWorld> gWorld;
 extern void userInit();
 class StaticQRegister;
 class SharedQSimpleQRegister;
-typedef StaticQRegister UserDefQRegister;
+//typedef StaticQRegister UserDefQRegister;
 
 
 
