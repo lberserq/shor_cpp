@@ -11,7 +11,7 @@ QT       -= gui
 TARGET = quantum_cpp
 CONFIG   += console
 CONFIG   -= app_bundle
-QMAKE_CXXFLAGS += -Wall -std=c++11 -lquantum -fopenmp -DUSE_NOISE -DCR_NOISE -O0 -g
+QMAKE_CXXFLAGS += -Wall -std=c++98 -lquantum -fopenmp -DUSE_NOISE -DCR_NOISE -O0 -g
 TEMPLATE = app
 
 QMAKE_INCDIR +=  /home/lberserq/svn/lq/libquantum-1.1.1/.libs/

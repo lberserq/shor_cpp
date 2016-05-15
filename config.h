@@ -150,7 +150,7 @@ namespace ParallelSubSystemHelper {
 
 
 #define reduce_helper
-//#define ENABLE_LOG
+#define ENABLE_LOG
 #ifdef ENABLE_LOG
 #define q_log(x) \
 {\

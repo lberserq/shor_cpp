@@ -134,21 +134,25 @@ void CraussNoiseDensityImpl::ApplyNoiseForDensityMatrix(IQRegister &reg)
     size_t width = reg.getWidth() * 2;
     if (!m_CraussOps.size())
     {
+        long double val  = xGenNRand();
+        mcomplex p = std::exp(-val * val);
 
-            long double val  = xGenNRand();
-            mcomplex p = std::exp(-val * val);
+        size_t len = (1 << m_dim);
+        QMatrix qq(len, len);
 
-            QMatrix qq(4, 4);
-            qq(0, 0) = qq(1, 1) = qq(2, 2) = 1.0;
-            qq(3, 3) = std::sqrt(1.0-p);
-            std::vector<uint_type> vct;
+        for (size_t  i = 0; i < len - 1; ++i) {
+            qq(i, i) = 1.0;
+        }
 
-            m_CraussOps.push_back(std::make_pair(qq, vct));
-            qq(0, 0) = qq(1, 1) = qq(2, 2) = 0.0;
-            qq(3, 3) = std::sqrt(p);
-            m_CraussOps.push_back(std::make_pair(qq, vct));
+        qq(len - 1, len - 1) = std::sqrt(1.0-p);
+        std::vector<uint_type> vct;
+        m_CraussOps.push_back(std::make_pair(qq, vct));
 
-            m_dim = 2;
+        for (size_t  i = 0; i < len - 1; ++i) {
+            qq(i, i) = 0.0;
+        }
+        qq(len - 1, len - 1) = std::sqrt(p);
+        m_CraussOps.push_back(std::make_pair(qq, vct));
 
     }
     std::vector<mcomplex> localRegStates(reg.getStatesSize());
@@ -167,29 +171,27 @@ void CraussNoiseDensityImpl::ApplyNoiseForDensityMatrix(IQRegister &reg)
             id2 = m_CraussOps[i].second[2];
         }
         QMatrix mp = m_CraussOps[i].first.conj();
+        std::vector<mcomplex> currentReg;
 
         switch (m_dim)
         {
         case 1:
             gWorld->GetGatesProvider()->ApplyQbitMatrix(m_CraussOps[i].first.conj(), reg, id0);
-            ParallelSubSystemHelper::thread::parallelAddAssign(&localRegStates[0], &reg.getAllReg()[0], localRegStates.size());
-
             gWorld->GetGatesProvider()->ApplyQbitMatrix(m_CraussOps[i].first, reg, width / 2 + id0);
-            ParallelSubSystemHelper::thread::parallelAddAssign(&localRegStates[0], &reg.getAllReg()[0], localRegStates.size());
+            currentReg = reg.getAllReg();
+            ParallelSubSystemHelper::thread::parallelAddAssign(&localRegStates[0], &currentReg[0], localRegStates.size());
             break;
         case 2:
-            gWorld->GetGatesProvider()->ApplyDiQbitMatrix(m_CraussOps[i].first.conj(), reg, id0, id1);
-            ParallelSubSystemHelper::thread::parallelAddAssign(&localRegStates[0], &reg.getAllReg()[0], localRegStates.size());
-
-            gWorld->GetGatesProvider()->ApplyDiQbitMatrix(m_CraussOps[i].first, reg, width / 2 + id0, width / 2 + id1);
-            ParallelSubSystemHelper::thread::parallelAddAssign(&localRegStates[0], &reg.getAllReg()[0], localRegStates.size());
+            gWorld->GetGatesProvider()->ApplyDiQbitMatrix(m_CraussOps[i].first, reg, id0, id1);
+            gWorld->GetGatesProvider()->ApplyDiQbitMatrix(m_CraussOps[i].first.conj(), reg, width / 2 + id0, width / 2 + id1);
+            currentReg = reg.getAllReg();
+            ParallelSubSystemHelper::thread::parallelAddAssign(&localRegStates[0], &currentReg[0], localRegStates.size());
             break;
         case 3:
             gWorld->GetGatesProvider()->ApplyTriQbitMatrix(m_CraussOps[i].first.conj(), reg, id0, id1, id2);
-            ParallelSubSystemHelper::thread::parallelAddAssign(&localRegStates[0], &reg.getAllReg()[0], localRegStates.size());
-
             gWorld->GetGatesProvider()->ApplyTriQbitMatrix(m_CraussOps[i].first, reg, width / 2 + id0, width / 2 + id1, width / 2 + id2);
-            ParallelSubSystemHelper::thread::parallelAddAssign(&localRegStates[0], &reg.getAllReg()[0], localRegStates.size());
+            currentReg = reg.getAllReg();
+            ParallelSubSystemHelper::thread::parallelAddAssign(&localRegStates[0], &currentReg[0], localRegStates.size());
             break;
         default:
             break;

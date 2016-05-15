@@ -60,31 +60,6 @@ public:
         return *this;
     }
 
-//    QMatrix operator *(const QMatrix &mat) {
-//        QMatrix res(rows_cnt, mat.columns_cnt);
-//        for (int i = 0; i < rows_cnt; i++) {
-//            for (int k = 0; k < mat.columns_cnt; k++) {
-//                mcomplex sum = 0.0f;
-//                for (int j = 0; j < columns_cnt; j++) {
-//                    sum += data_ptr[i][j] * mat.data_ptr[j][k];
-//                }
-//                res.data_ptr[i][k] = sum;
-//            }
-//        }
-//        return res;
-//    }
-
-
-
-
-//    const QMatrix & operator *(const mcomplex &val) {
-//        for (int i = 0; i < rows_cnt; i++) {
-//            for (int j = 0; j < columns_cnt; j++) {
-//                data_ptr[i][j] *= val;
-//            }
-//        }
-//        return *this;
-//    }
     std::string toString() const {
         std::stringstream stream;
         stream << "MATRIX " << rows_cnt << 'x' << columns_cnt << '\n';
