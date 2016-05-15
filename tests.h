@@ -16,6 +16,10 @@ namespace tests {
     void SwapTest();
     void collapseTest();
     void fake_test();
-};
+
+    void shor_test();
+    void matrix_test();
+    void crauss_test();
+}
 
 #endif // TESTS_H

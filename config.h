@@ -68,6 +68,11 @@ class SharedQSimpleQRegister;
 
 
 
+#define STR(x) #x
+#define STRINGIFY(x) STR(x)
+#define CONCATENATE(X,Y) X ( Y )
+#define X_ASSERT(val) {throw std::logic_error(std::string(__FILE__) + STRINGIFY(__LINE__))
+
 namespace ParallelSubSystemHelper {
     struct mpicfg {
         int rank;
@@ -77,30 +82,29 @@ namespace ParallelSubSystemHelper {
 
     mpicfg getConfig();
     bool isInited();
-/*    void AllreduceHelper(long double &val, MPI_Op op) {
+    void barrier();
+    //template <class T> void AllReduceHelper();
+
+    /*    void AllreduceHelper(long double &val, MPI_Op op) {
         long double gval = 0;
         if (getConfig().size) {
             MPI_Allreduce(&gval, &http://vk.com/public85340642val, 1, MPI_LONG_DOUBLE, op, MPI_COMM_WORLD);
         }
         val = gval;
     }*/
+
+    namespace thread
+    {
+        template<class T> void parallelAddAssign(T *firstBegin, T *second, size_t size);
+        template<class T> void parallelSubAssign(T *firstBegin, T *second, size_t size);
+        template<class T> void parallelMulAssign(T *firstBegin, T *second, size_t size);
+        template<class T> void parallelDivAssign(T *firstBegin, T *second, size_t size);
+    }
 }
 
 
 
 
-#define dumpvec(vec, Rank) \
-{\
-    MPI_Barrier(MPI_COMM_WORLD);\
-    if (ParallelSubSystemHelper::getConfig().rank == Rank) {\
-    std::cerr << "Dumping Vec "  << std::endl; \
-    for (size_t i = 0; i < vec.size(); i++) \
-    if (i != vec.size() - 1) std::cerr << vec[i] << " "; \
-    else std::cerr << vec[i] << "\n"; \
-    std::cerr << std::flush; \
-    }\
-    MPI_Barrier(MPI_COMM_WORLD);\
-    }
 
 #define dumpVar(var, Rank) \
 {\
@@ -108,10 +112,9 @@ namespace ParallelSubSystemHelper {
     if (ParallelSubSystemHelper::getConfig().rank == Rank) {\
     std::cerr << "DUMPING VAR == " << var << std::flush << std::endl;\
     }\
-    MPI_Barrier(MPI_COMM_WORLD);\
-    }
+    MPI_Barrier(MPI_COMM_WORLD);}\
 
-#define dumparray(array, len, Rank) \
+#define mpi_dumparray(array, len, Rank) \
 {\
     MPI_Barrier(MPI_COMM_WORLD);\
     if (ParallelSubSystemHelper::getConfig().rank == Rank) {\
@@ -125,12 +128,40 @@ namespace ParallelSubSystemHelper {
     }
 
 
+#define dumparray(array, len, Rank) \
+{\
+    if (ParallelSubSystemHelper::isInited()){\
+        mpi_dumparray(array, len, Rank);\
+    } else {\
+    std::cerr << "Dumping Array "  << std::endl; \
+    for (size_t i = 0; i < len; i++) \
+    if (i != len - 1) std::cerr << array[i] << " "; \
+    else std::cerr << array[i] << "\n"; \
+    std::cerr << std::flush; \
+    }\
+}
+
+
+#define dumpvec(vec, Rank) \
+{\
+    dumparray(vec.begin(), vec.size(), Rank);\
+}
+
 
 
 #define reduce_helper
-
-#define q_log(x) dumpVar(x, 0)
-
+//#define ENABLE_LOG
+#ifdef ENABLE_LOG
+#define q_log(x) \
+{\
+    if (ParallelSubSystemHelper::isInited()){\
+        dumpVar((x), 0);}\
+    else{\
+        std::cerr << (x) << std::endl;}\
+}
+#else
+#define q_log(x)
+#endif
 enum
 {
         XML_LOAD_FAILED = 100,

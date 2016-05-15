@@ -15,15 +15,16 @@ void OpenMPGatesImpl::ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0
 #ifdef LOGGING
     std::set<int> m_s; m_s.insert(id0); log_str(m_s);
 #endif
-    std::vector<mcomplex> ampls;
-    ampls.resize(reg.getStates().size());
+    std::vector<mcomplex> ampls(reg.getStates().size(), 0);
     state st_sz = reg.getStatesSize();
     //int m_w = reg.getWidth();
     //int local_id0 = m_w - id0 - 1;
     int local_id0 = id0;
-    if (local_id0 >= static_cast<int>(reg.getWidth())) {
-        throw std::invalid_argument("Invalid id for OneQBitOp");
+    int alpha = (reg.getRepresentation() == REG_REPRESENTATION) ? 1 : 2;
+    if (local_id0 >= alpha * static_cast<int>(reg.getWidth())) {
+        throw std::invalid_argument("Invalid id for QBitOp");
     }
+
 #pragma omp parallel for schedule(static)
     for (state i = 0; i < st_sz; i++) {
         int s_id = get_bit(i, local_id0);
@@ -47,16 +48,17 @@ void OpenMPGatesImpl::ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int i
     std::set<int> m_s; m_s.insert(id0); m_s.insert(id1); log_str(m_s);
 #endif
 
-    std::vector<mcomplex> ampls;
-    ampls.resize(reg.getStates().size());
+    std::vector<mcomplex> ampls(reg.getStates().size(), 0);
     state st_sz = reg.getStatesSize();
     int local_id0 = id0;
     int local_id1 = id1;
 
-    if (local_id0 >= static_cast<int>(reg.getWidth())
-            || local_id1 >= static_cast<int>(reg.getWidth())) {
+    int alpha = (reg.getRepresentation() == REG_REPRESENTATION) ? 1 : 2;
+    if (local_id0 >= alpha * static_cast<int>(reg.getWidth())
+            || local_id1 >= alpha * static_cast<int>(reg.getWidth())) {
         throw std::invalid_argument("Invalid id for DiQBitOp");
     }
+
 #pragma omp parallel for schedule(static)
     for (state i = 0; i < st_sz; i++) {
         int id_curr0 = get_bit(i, local_id0);
@@ -87,17 +89,19 @@ void OpenMPGatesImpl::ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int 
     std::set<int> m_s; m_s.insert(id0);  m_s.insert(id1); m_s.insert(id2); log_str(m_s);
 #endif
 
-    std::vector<mcomplex> ampls;
-    ampls.resize(reg.getStates().size());
+    std::vector<mcomplex> ampls(reg.getStates().size(), 0);
     state st_sz = reg.getStatesSize();
     int local_id0 = id0;
     int local_id1 = id1;
     int local_id2 = id2;
-    if (local_id0 >= static_cast<int>(reg.getWidth())
-            || local_id1 >= static_cast<int>(reg.getWidth())
-            || local_id2 >= static_cast<int>(reg.getWidth())) {
+
+    int alpha = (reg.getRepresentation() == REG_REPRESENTATION) ? 1 : 2;
+    if (local_id0 >= alpha * static_cast<int>(reg.getWidth())
+            || local_id1 >= alpha * static_cast<int>(reg.getWidth())
+            || local_id2 >= alpha * static_cast<int>(reg.getWidth())) {
         throw std::invalid_argument("Invalid id for TriQBitOp");
     }
+
 #pragma omp parallel for schedule(static)
     for (state i = 0; i < st_sz; i++) {
         int id_curr0 = get_bit(i, local_id0);
@@ -122,7 +126,7 @@ void OpenMPGatesImpl::ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int 
 
 void NUMAGatesImpl::ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
 {
-    MPI_Barrier(MPI_COMM_WORLD);
+    ParallelSubSystemHelper::barrier();
     QMatrix resm = m;
 #ifdef USE_NOISE
     if (gWorld->GetNoiseProvider()->GetOperatorNoise()) {
@@ -132,13 +136,14 @@ void NUMAGatesImpl::ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
 #ifdef LOGGING
     std::set<int> m_s; m_s.insert(id0); log_str(m_s);
 #endif
-    std::vector<mcomplex> ampls;
-    ampls.resize(reg.getStates().size());
-    memset(&ampls[0], 0, ampls.size() * sizeof(ampls[0]));
+    std::vector<mcomplex> ampls(reg.getStates().size(), 0);
+    //memset(&ampls[0], 0, ampls.size() * sizeof(ampls[0]));
     state st_sz = reg.getStatesSize();
+
     int local_id0 = id0;
-    if (local_id0 >= static_cast<int>(reg.getWidth())) {
-        throw std::invalid_argument("Invalid id for OneQBitOp");
+    int alpha = (reg.getRepresentation() == REG_REPRESENTATION) ? 1 : 2;
+    if (local_id0 >= alpha * static_cast<int>(reg.getWidth())) {
+        throw std::invalid_argument("Invalid id for QBitOp");
     }
 
     const int OperationDimension = 2;
@@ -150,6 +155,19 @@ void NUMAGatesImpl::ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
                         / reg.getStatesSize();
     }
 
+//    {
+//        const int drank =  3 ;
+//        q_log("NB");
+//        dumpVar((1 << reg.getWidth()), drank);
+//        q_log("id0");
+//        dumpVar(id0, drank);
+//        q_log("off");
+//        dumpVar(reg.getOffset(), drank);
+//        q_log("SSize");
+//        dumpVar(reg.getStatesSize(), drank);
+//        q_log("NBG");
+//        dumparray(neighbours, OperationDimension, drank);
+//    }
     std::vector<int> RealNeighbours;
     for (int i = 0; i < OperationDimension; i++) {
         bool found = std::find(RealNeighbours.begin(), RealNeighbours.end(), neighbours[i]) != RealNeighbours.end();
@@ -196,6 +214,30 @@ void NUMAGatesImpl::ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
         MPI_Status st;
         if (RealNeighbours[currentNeighbour] != ParallelSubSystemHelper::getConfig().rank) {
 
+            if ((ParallelSubSystemHelper::getConfig().size &&
+                 nextNeighbour >= ParallelSubSystemHelper::getConfig().size) || nextNeighbour < 0) {
+
+                dumpVar(ParallelSubSystemHelper::getConfig().rank, ParallelSubSystemHelper::getConfig().rank);
+                dumpvec(RealNeighbours, ParallelSubSystemHelper::getConfig().rank);
+                dumpVar(nextNeighbour, ParallelSubSystemHelper::getConfig().rank);
+                dumpVar(currentNeighbour, ParallelSubSystemHelper::getConfig().rank);
+
+                if (nextNeighbour < 0) throw "ApplyQbitMatrix:nextNeighbour<0";
+                if (nextNeighbour >= 0) throw "ApplyQbitMatrix:nextNeighbour >= ParallelSubSystemHelper::getConfig().size";
+            }
+            if ((ParallelSubSystemHelper::getConfig().size &&
+                    prevNeighbour >= ParallelSubSystemHelper::getConfig().size) || prevNeighbour < 0) {
+
+                dumpVar(ParallelSubSystemHelper::getConfig().rank, ParallelSubSystemHelper::getConfig().rank);
+                dumpvec(RealNeighbours, ParallelSubSystemHelper::getConfig().rank);
+                dumpVar(nextNeighbour, ParallelSubSystemHelper::getConfig().rank);
+                dumpVar(currentNeighbour, ParallelSubSystemHelper::getConfig().rank);
+
+                if (prevNeighbour < 0) throw "ApplyQbitMatrix:prevNeighbour<0";
+                if (prevNeighbour >= 0) throw "ApplyQbitMatrix:prevNeighbour >= ParallelSubSystemHelper::getConfig().size";
+            }
+
+
             MPI_Sendrecv_replace(&reg.getStates()[0],
                     reg.getStatesSize(),
                     MPI_DOUBLE_COMPLEX,
@@ -212,12 +254,12 @@ void NUMAGatesImpl::ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
         }
     }
     reg.setStates(ampls);
-    MPI_Barrier(MPI_COMM_WORLD);
+    ParallelSubSystemHelper::barrier();
 }
 
 void NUMAGatesImpl::ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1)
 {
-    MPI_Barrier(MPI_COMM_WORLD);
+    ParallelSubSystemHelper::barrier();
     QMatrix resm = m;
 #ifdef USE_NOISE
     if (gWorld->GetNoiseProvider()->GetOperatorNoise()) {
@@ -227,17 +269,15 @@ void NUMAGatesImpl::ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0
 #ifdef LOGGING
     std::set<int> m_s; m_s.insert(id0); log_str(m_s);
 #endif
-    std::vector<mcomplex> ampls;
-    ampls.resize(reg.getStates().size());
-    memset(&ampls[0], 0, ampls.size() * sizeof(ampls[0]));
+    std::vector<mcomplex> ampls(reg.getStates().size(), 0);
     state st_sz = reg.getStatesSize();
     int local_id0 = id0;
     int local_id1 = id1;
-    if (local_id0 >= static_cast<int>(reg.getWidth())
-            || local_id1 >= static_cast<int>(reg.getWidth())) {
+    int alpha = (reg.getRepresentation() == REG_REPRESENTATION) ? 1 : 2;
+    if (local_id0 >= alpha * static_cast<int>(reg.getWidth())
+            || local_id1 >= alpha * static_cast<int>(reg.getWidth())) {
         throw std::invalid_argument("Invalid id for DiQBitOp");
     }
-
     const int OperationDimension = 4;
     int neighbours[OperationDimension];
 
@@ -308,6 +348,30 @@ void NUMAGatesImpl::ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0
 
         MPI_Status st;
         if (RealNeighbours[currentNeighbour] != ParallelSubSystemHelper::getConfig().rank) {
+            if ((ParallelSubSystemHelper::getConfig().size &&
+                 nextNeighbour >= ParallelSubSystemHelper::getConfig().size) || nextNeighbour < 0) {
+
+                dumpVar(ParallelSubSystemHelper::getConfig().rank, ParallelSubSystemHelper::getConfig().rank);
+                dumpvec(RealNeighbours, ParallelSubSystemHelper::getConfig().rank);
+                dumpVar(nextNeighbour, ParallelSubSystemHelper::getConfig().rank);
+                dumpVar(currentNeighbour, ParallelSubSystemHelper::getConfig().rank);
+
+                if (nextNeighbour < 0) throw "ApplyDiQbitMatrix:nextNeighbour<0";
+                if (nextNeighbour >= 0) throw "ApplyDiQbitMatrix:nextNeighbour >= ParallelSubSystemHelper::getConfig().size";
+            }
+            if ((ParallelSubSystemHelper::getConfig().size &&
+                    prevNeighbour >= ParallelSubSystemHelper::getConfig().size) || prevNeighbour < 0) {
+
+                dumpVar(ParallelSubSystemHelper::getConfig().rank, ParallelSubSystemHelper::getConfig().rank);
+                dumpvec(RealNeighbours, ParallelSubSystemHelper::getConfig().rank);
+                dumpVar(nextNeighbour, ParallelSubSystemHelper::getConfig().rank);
+                dumpVar(currentNeighbour, ParallelSubSystemHelper::getConfig().rank);
+
+                if (prevNeighbour < 0) throw "ApplyDiQbitMatrix:prevNeighbour<0";
+                if (prevNeighbour >= 0) throw "ApplyDiQbitMatrix:prevNeighbour >= ParallelSubSystemHelper::getConfig().size";
+            }
+
+
             MPI_Sendrecv_replace(&reg.getStates()[0],
                     reg.getStatesSize(),
                     MPI_DOUBLE_COMPLEX,
@@ -326,13 +390,13 @@ void NUMAGatesImpl::ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0
 
     }
     reg.setStates(ampls);
-    MPI_Barrier(MPI_COMM_WORLD);
+    ParallelSubSystemHelper::barrier();
 }
 
 void NUMAGatesImpl::ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1, int id2)
 {
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    ParallelSubSystemHelper::barrier();
     QMatrix resm = m;
 #ifdef USE_NOISE
     if (gWorld->GetNoiseProvider()->GetOperatorNoise()) {
@@ -342,16 +406,16 @@ void NUMAGatesImpl::ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id
 #ifdef LOGGING
     std::set<int> m_s; m_s.insert(id0); log_str(m_s);
 #endif
-    std::vector<mcomplex> ampls;
-    ampls.resize(reg.getStates().size());
-    memset(&ampls[0], 0, ampls.size() * sizeof(ampls[0]));
+    std::vector<mcomplex> ampls(reg.getStates().size(), 0);
     state st_sz = reg.getStatesSize();
     int local_id0 = id0;
     int local_id1 = id1;
     int local_id2 = id2;
-    if (local_id0 >= static_cast<int>(reg.getWidth())
-            || local_id1 >= static_cast<int>(reg.getWidth())
-            || local_id2 >= static_cast<int>(reg.getWidth())) {
+
+    int alpha = (reg.getRepresentation() == REG_REPRESENTATION) ? 1 : 2;
+    if (local_id0 >= alpha * static_cast<int>(reg.getWidth())
+            || local_id1 >= alpha * static_cast<int>(reg.getWidth())
+            || local_id2 >= alpha * static_cast<int>(reg.getWidth())) {
         throw std::invalid_argument("Invalid id for TriQBitOp");
     }
 
@@ -427,7 +491,31 @@ void NUMAGatesImpl::ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id
         prevNeighbour = RealNeighbours[RealNeighbours.size() - 1];
 
         MPI_Status st;
-        if (RealNeighbours[currentNeighbour] != ParallelSubSystemHelper::getConfig().rank) {
+        if (RealNeighbours[currentNeighbour] != ParallelSubSystemHelper::getConfig().rank)
+        {
+            if ((ParallelSubSystemHelper::getConfig().size &&
+                 nextNeighbour >= ParallelSubSystemHelper::getConfig().size) || nextNeighbour < 0) {
+
+                dumpVar(ParallelSubSystemHelper::getConfig().rank, ParallelSubSystemHelper::getConfig().rank);
+                dumpvec(RealNeighbours, ParallelSubSystemHelper::getConfig().rank);
+                dumpVar(nextNeighbour, ParallelSubSystemHelper::getConfig().rank);
+                dumpVar(currentNeighbour, ParallelSubSystemHelper::getConfig().rank);
+
+                if (nextNeighbour < 0) throw "ApplyTriQbitMatrix:nextNeighbour<0";
+                if (nextNeighbour >= 0) throw "ApplyTriQbitMatrix:nextNeighbour >= ParallelSubSystemHelper::getConfig().size";
+            }
+            if ((ParallelSubSystemHelper::getConfig().size &&
+                    prevNeighbour >= ParallelSubSystemHelper::getConfig().size) || prevNeighbour < 0) {
+
+                dumpVar(ParallelSubSystemHelper::getConfig().rank, ParallelSubSystemHelper::getConfig().rank);
+                dumpvec(RealNeighbours, ParallelSubSystemHelper::getConfig().rank);
+                dumpVar(nextNeighbour, ParallelSubSystemHelper::getConfig().rank);
+                dumpVar(currentNeighbour, ParallelSubSystemHelper::getConfig().rank);
+
+                if (prevNeighbour < 0) throw "ApplyTriQbitMatrix:prevNeighbour<0";
+                if (prevNeighbour >= 0) throw "ApplyTriQbitMatrix:prevNeighbour >= ParallelSubSystemHelper::getConfig().size";
+            }
+
             MPI_Sendrecv_replace(&reg.getStates()[0],
                     reg.getStatesSize(),
                     MPI_DOUBLE_COMPLEX,
@@ -437,17 +525,13 @@ void NUMAGatesImpl::ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id
                     e_tag,
                     MPI_COMM_WORLD,
                     &st);
-            int currentId = (RealNeighbours.size() - 1 - currentNeighbour +
+            size_t currentId = (RealNeighbours.size() - 1 - currentNeighbour +
                              RealNeighbours.size()) % RealNeighbours.size();
 
             local_index = RealNeighbours[currentId] * reg.getStates().size();
 
-        } else {
-            std::cerr << "RANK$$$$$$$$$$$$$$$ " << ParallelSubSystemHelper::getConfig().rank << std::endl;
-            std::cerr << "$$$$$$$$$$$$$$$$$$$ " << currentNeighbour << std::endl;
         }
-
     }
     reg.setStates(ampls);
-    MPI_Barrier(MPI_COMM_WORLD);
+    ParallelSubSystemHelper::barrier();
 }

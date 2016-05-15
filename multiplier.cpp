@@ -12,9 +12,6 @@ Multiplier::Multiplier(IQRegister &in, int N, int width, int a, int ctl_id)
 
 void fix_local_vars(IQRegister &in, int var_pin, int width) {
     for (int i = 0; i < width; i++) {
-        //        ApplyToffoli(in, var_pin, width + i, 2 * width + 2 + i);
-        //        ApplyToffoli(in, var_pin, 2 * width + 2 + i, width + i);
-        //        ApplyToffoli(in, var_pin, width + i, 2 * width + 2 + i);
         ApplyCSWAP(in, var_pin, 2 * width + 2 + i, width + i);
     }
 }
@@ -52,9 +49,6 @@ void Multiplier::mul()
     ApplyToffoli(m_reg, m_ctlid, 2 * m_width + 2, tw);
 
     for (int i = 1; i < m_width; i++) {
-
-        q_log("MUL");
-        q_log(i);
         ApplyToffoli(m_reg, m_ctlid, 2 * m_width + 2 + i, tw);
 
         //(1 << i) *(1 >> i) == 1
@@ -94,8 +88,6 @@ void Multiplier::mulinv()
 
     for (int i = m_width - 1; i > 0; i--) {
 
-        q_log("MULINV");
-        q_log(i);
         ApplyToffoli(m_reg, m_ctlid, 2 * m_width + 2 + i, tw);
 
         Adder *add = new Adder(m_N - ((1 << i) * m_a) % m_N, m_N, m_width, m_reg);
@@ -132,9 +124,9 @@ void Multiplier::BasicMultiplication(int x) {
 
 IQRegister &expamodn(IQRegister &in, int N, int x, int width_in, int local_width)
 {
-    q_log("EAN");
+//    q_log("EAN");
     ApplyNot(in, 2 * local_width + 2);
-    q_log("NOT");
+//    q_log("NOT");
     for (int i = 0; i < width_in; i++) {
         int pow = x % N;
         for (int j = 1; j < i + 1; j++) {
@@ -143,9 +135,8 @@ IQRegister &expamodn(IQRegister &in, int N, int x, int width_in, int local_width
         }
         Multiplier *mp = new Multiplier(in, N, local_width, pow, 3  * local_width + i + 2);
         in = mp->perform();
-        //in.printNorm();
-        q_log("EAXN");
-        q_log(i);
+//        q_log("EAXN");
+//        q_log(i);
         delete mp;
     }
     return in;

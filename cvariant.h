@@ -52,6 +52,7 @@ public:
 
   cVariant(VarFunc *val) : m_mode(vtFunc), m_func(val) {}
 
+
   cVariant(const std::vector<cVariant> &val)
       : m_mode(vtTuple), m_tupleVal(val) {}
 
@@ -288,6 +289,9 @@ public:
 
   cVariant  operator / (const cVariant &other) const;
 
+  cVariant  operator % (const cVariant &other) const;
+
+
   cVariant & operator--()
   {
       switch (m_mode)
@@ -405,7 +409,7 @@ inline str_t Tuple2S(const std::vector<cVariant> m_tupleVal) {
   return res;
 }
 
-template <> int_t cVariant::get<int_t>() const {
+template <> inline int_t cVariant::get<int_t>() const {
   switch (m_mode) {
   case vtInt:
     return m_iVal;
@@ -421,7 +425,7 @@ template <> int_t cVariant::get<int_t>() const {
   return 0;
 }
 
-template <> float_t cVariant::get<float_t>() const {
+template <> inline float_t cVariant::get<float_t>() const {
   switch (m_mode) {
   case vtInt:
     return m_iVal;
@@ -437,7 +441,7 @@ template <> float_t cVariant::get<float_t>() const {
   return 0;
 }
 
-template <> complex_t cVariant::get<complex_t>() const {
+template <> inline complex_t cVariant::get<complex_t>() const {
   switch (m_mode) {
   case vtInt:
     return m_iVal;
@@ -453,19 +457,19 @@ template <> complex_t cVariant::get<complex_t>() const {
   return 0;
 }
 
-template <> str_t cVariant::get<str_t>() const { return toString(); }
+template <> inline str_t cVariant::get<str_t>() const { return toString(); }
 
-template <> VarFunc *cVariant::get<VarFunc *>() const {
+template <> inline VarFunc *cVariant::get<VarFunc *>() const {
   return (m_mode == vtFunc) ? m_func : NULL;
 }
 
-template <> std::vector<cVariant> cVariant::get<std::vector<cVariant> >() const {
+template <> inline std::vector<cVariant> cVariant::get<std::vector<cVariant> >() const {
   tuple_t res;
   res.push_back(*this);
   return (m_mode == vtTuple) ? m_tupleVal : res;
 }
 
-cVariant::operator bool() const { return get<int_t>() != 0; }
+inline cVariant::operator bool() const { return get<int_t>() != 0; }
 
 namespace {
 int x_tuple_cmp(const std::vector<cVariant> &left,
@@ -485,7 +489,7 @@ int x_tuple_cmp(const std::vector<cVariant> &left,
 }
 }
 
-bool operator<(const cVariant &left, const cVariant &right) {
+inline bool operator<(const cVariant &left, const cVariant &right) {
 
   switch (left.m_mode) {
   case cVariant::vtInt:
@@ -511,7 +515,7 @@ bool operator<(const cVariant &left, const cVariant &right) {
   return false;
 }
 
-bool operator==(const cVariant &left, const cVariant &right) {
+inline bool operator==(const cVariant &left, const cVariant &right) {
   switch (left.m_mode) {
   case cVariant::vtInt:
     return left.m_iVal == right.get<int_t>();
@@ -537,68 +541,68 @@ bool operator==(const cVariant &left, const cVariant &right) {
   return false;
 }
 
-bool operator>(const cVariant &left, const cVariant &right) {
+inline bool operator>(const cVariant &left, const cVariant &right) {
   return right < left;
 }
 
-bool operator<=(const cVariant &left, const cVariant &right) {
+inline bool operator<=(const cVariant &left, const cVariant &right) {
   return !(left > right);
 }
 
-bool operator>=(const cVariant &left, const cVariant &right) {
+inline bool operator>=(const cVariant &left, const cVariant &right) {
   return !(left < right);
 }
 
-bool operator!=(const cVariant &left, const cVariant &right) {
+inline bool operator!=(const cVariant &left, const cVariant &right) {
   return !(left == right);
 }
 
 #define CVARIANT_DECLARE_COMPARABLE_IMPL(_type)                                \
-  bool operator<(const cVariant &left, const _type &right) {                   \
+inline bool operator<(const cVariant &left, const _type &right) {                   \
     return left < cVariant(right);                                             \
   }                                                                            \
                                                                                \
-  bool operator<=(const cVariant &left, const _type &right) {                  \
+inline  bool operator<=(const cVariant &left, const _type &right) {                  \
     return left < cVariant(right);                                             \
   }                                                                            \
                                                                                \
-  bool operator==(const cVariant &left, const _type &right) {                  \
+inline  bool operator==(const cVariant &left, const _type &right) {                  \
     return left == cVariant(right);                                            \
   }                                                                            \
                                                                                \
-  bool operator>=(const cVariant &left, const _type &right) {                  \
+inline  bool operator>=(const cVariant &left, const _type &right) {                  \
     return left >= cVariant(right);                                            \
   }                                                                            \
                                                                                \
-  bool operator>(const cVariant &left, const _type &right) {                   \
+inline  bool operator>(const cVariant &left, const _type &right) {                   \
     return left > cVariant(right);                                             \
   }                                                                            \
                                                                                \
-  bool operator!=(const cVariant &left, const _type &right) {                  \
+inline  bool operator!=(const cVariant &left, const _type &right) {                  \
     return (left != cVariant(right));                                          \
   }                                                                            \
                                                                                \
-  bool operator<(const _type &left, const cVariant &right) {                   \
+inline  bool operator<(const _type &left, const cVariant &right) {                   \
     return cVariant(left) < right;                                             \
   }                                                                            \
                                                                                \
-  bool operator<=(const _type &left, const cVariant &right) {                  \
+inline  bool operator<=(const _type &left, const cVariant &right) {                  \
     return cVariant(left) <= right;                                            \
   }                                                                            \
                                                                                \
-  bool operator==(const _type &left, const cVariant &right) {                  \
+inline  bool operator==(const _type &left, const cVariant &right) {                  \
     return (cVariant(left) == right);                                          \
   }                                                                            \
                                                                                \
-  bool operator>=(const _type &left, const cVariant &right) {                  \
+inline  bool operator>=(const _type &left, const cVariant &right) {                  \
     return (cVariant(left) >= right);                                          \
   }                                                                            \
                                                                                \
-  bool operator>(const _type &left, const cVariant &right) {                   \
+inline  bool operator>(const _type &left, const cVariant &right) {                   \
     return cVariant(left) > right;                                             \
   }                                                                            \
                                                                                \
-  bool operator!=(const _type &left, const cVariant &right) {                  \
+inline  bool operator!=(const _type &left, const cVariant &right) {                  \
     return cVariant(left) != right;                                            \
   }
 
@@ -610,7 +614,7 @@ CVARIANT_DECLARE_COMPARABLE_IMPL(complex_t)
 CVARIANT_DECLARE_COMPARABLE_IMPL(str_t)
 CVARIANT_DECLARE_COMPARABLE_IMPL(std::vector<cVariant>)
 
-cVariant cVariant::operator+(const cVariant &other) const {
+inline cVariant cVariant::operator+(const cVariant &other) const {
   switch (m_mode) {
   case vtString:
     return cVariant(m_strVal + other.toString());
@@ -633,7 +637,7 @@ cVariant cVariant::operator+(const cVariant &other) const {
   return *this;
 }
 
-cVariant  cVariant::operator -(const cVariant &other) const
+inline cVariant  cVariant::operator -(const cVariant &other) const
 {
     switch (m_mode) {
     case vtComplex:
@@ -648,7 +652,7 @@ cVariant  cVariant::operator -(const cVariant &other) const
     return *this;
 }
 
-cVariant  cVariant::operator *(const cVariant &other) const
+inline cVariant  cVariant::operator *(const cVariant &other) const
 {
     switch (m_mode) {
     case vtComplex:
@@ -663,7 +667,7 @@ cVariant  cVariant::operator *(const cVariant &other) const
     return *this;
 }
 
-cVariant  cVariant::operator / (const cVariant &other) const
+inline cVariant  cVariant::operator / (const cVariant &other) const
 {
     switch (m_mode) {
     case vtComplex:
@@ -678,8 +682,15 @@ cVariant  cVariant::operator / (const cVariant &other) const
     return *this;
 }
 
+inline cVariant  cVariant::operator % (const cVariant &other) const
+{
+   return cVariant(get<int_t>() % other.get<int_t>());
+}
+
+
+
 #define CVARIANT_OP_ASSIGN_IMPL1(_op)\
-    cVariant & cVariant::operator _op##=(const cVariant &other)\
+    inline cVariant & cVariant::operator _op##=(const cVariant &other)\
     {\
       *this = *this  _op other;\
       return *this;\
@@ -691,7 +702,7 @@ CVARIANT_OP_ASSIGN_IMPL1(*)
 CVARIANT_OP_ASSIGN_IMPL1(/)
 
 #define CVARIANT_OP_ASSIGN_TYPE_IMPL(_op, _type)                            \
-  cVariant & cVariant::operator _op##=(const _type &other)\
+  inline cVariant & cVariant::operator _op##=(const _type &other)\
   {\
     return cVariant::operator _op##=(cVariant(other));\
   }\
@@ -712,10 +723,10 @@ CVARIANT_IMPL_OP_ASSIGNS_TYPE(str_t)
 CVARIANT_IMPL_OP_ASSIGNS_TYPE(std::vector<cVariant>)
 
 #define CVARIANT_IMPL_OP_TYPE(_op, _type)                                      \
-  cVariant operator _op(const cVariant &left, const _type &right) {            \
+  inline cVariant operator _op(const cVariant &left, const _type &right) {            \
     return cVariant(left _op cVariant(right));                                 \
   }                                                                            \
-  cVariant operator _op(const _type &left, const cVariant &right) {            \
+  inline cVariant operator _op(const _type &left, const cVariant &right) {            \
     return cVariant(cVariant(left) _op right);                                 \
   }
 
@@ -724,7 +735,7 @@ CVARIANT_IMPL_OP_ASSIGNS_TYPE(std::vector<cVariant>)
   CVARIANT_IMPL_OP_TYPE(-, _type)                                              \
   CVARIANT_IMPL_OP_TYPE(*, _type)                                              \
   CVARIANT_IMPL_OP_TYPE(/, _type)                                              \
-  CVARIANT_DECLARE_OP_TYPE(%, _type)
+  CVARIANT_IMPL_OP_TYPE(%, _type)
 
 CVARIANT_IMPL_OPS_TYPE(int)
 //CVARIANT_IMPL_OPS_TYPE(uint_type)
@@ -735,7 +746,7 @@ CVARIANT_IMPL_OPS_TYPE(str_t)
 CVARIANT_IMPL_OPS_TYPE(char*)
 //CVARIANT_IMPL_OPS_TYPE(std::vector<cVariant>)
 
-cVariant & cVariant::operator %=(const cVariant &other)
+inline cVariant & cVariant::operator %=(const cVariant &other)
 {
     if (other.m_iVal != 0)
     {
@@ -744,14 +755,14 @@ cVariant & cVariant::operator %=(const cVariant &other)
     return *this;
 }
 
-cVariant &cVariant::operator<<=(const cVariant &other) {
+inline cVariant &cVariant::operator<<=(const cVariant &other) {
   if (other.m_iVal >= 0) {
     m_iVal <<= other.m_iVal;
   }
   return *this;
 }
 
-cVariant &cVariant::operator>>=(const cVariant &other) {
+inline cVariant &cVariant::operator>>=(const cVariant &other) {
   if (other.m_iVal >= 0) {
     m_iVal >>= other.m_iVal;
   }

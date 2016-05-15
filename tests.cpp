@@ -2,7 +2,6 @@
 #include "adder.h"
 #include "multiplier.h"
 #include "qft.h"
-//#include "complex.h"
 #include "measure.h"
 #include <complex.h>
 #if (__cplusplus >= 201103L)
@@ -33,7 +32,7 @@ int compare(IQRegister *x, quantum_reg *t)
     if (t->width == static_cast<int>(x->getWidth()) ) {
         std::vector<mcomplex> xst = x->getAllReg();
         unsigned char errorFlag = 0;
-        MPI_Barrier(MPI_COMM_WORLD);
+        ParallelSubSystemHelper::barrier();
         if (!ParallelSubSystemHelper::getConfig().rank) {
             for (int i = 0; i < t->size; i++) {
                 unsigned p = t->state[i];
@@ -48,7 +47,7 @@ int compare(IQRegister *x, quantum_reg *t)
                     std::fflush(stderr);
                     quantum_print_qureg(*t);
                     std::fflush(stdout);
-                    //std::fprintf(stderr, "FOUND\n");
+                    std::fprintf(stderr, "FOUND\n");
                     //x->print();
                     errorFlag = 1;
                     break;
@@ -57,7 +56,7 @@ int compare(IQRegister *x, quantum_reg *t)
             }
         }
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        ParallelSubSystemHelper::barrier();
         unsigned char gErrorFlag = 0;
         MPI_Allreduce(&errorFlag,
                       &gErrorFlag,
@@ -68,7 +67,7 @@ int compare(IQRegister *x, quantum_reg *t)
         if (gErrorFlag) {
 
             x->print();
-            MPI_Barrier(MPI_COMM_WORLD);
+            ParallelSubSystemHelper::barrier();
             MPI_Abort(MPI_COMM_WORLD, -1);
             return 1;
         }
@@ -168,12 +167,17 @@ void tests::AdderTest()
 
 void tests::HadmardTest()
 {
+    ParallelSubSystemHelper::barrier();
+    q_log("HTEST");
     ParallelLogger(stderr, "Hadamard TEST\n");
     int pin = tests::width - 1;
     IQRegister *p = new UserDefQRegister(tests::width, 0);
     quantum_reg t = quantum_new_qureg(0, tests::width);
     ApplyHadamard(*p, pin);
     quantum_hadamard(pin, &t);
+    if  (compare(p, &t)) {
+        return;
+    }
     for (int i = 0; i < (1 << tests::width); i++) {
         for (int j = 0; j < tests::width; j++ ) {
             IQRegister *pp = new UserDefQRegister(tests::width, i);
@@ -201,6 +205,7 @@ void tests::HadmardTest()
 
 void tests::CNOTTest() {
 
+    ParallelSubSystemHelper::barrier();
     ParallelLogger(stderr, "CNOT TEST\n");
     //const int N = 100;
     const int width = 2;
@@ -400,6 +405,8 @@ void exp_test_fun(IQRegister *p, quantum_reg *t, int a, int N, int swidth, int w
 
 void tests::MulTest()
 {
+
+    ParallelSubSystemHelper::barrier();
     ParallelLogger(stderr, "MULTIPLIER TEST\n");
     const int N = 8;
     //const int width = 4;
@@ -410,8 +417,13 @@ void tests::MulTest()
     quantum_reg t = quantum_new_qureg(0, width);
     apply_walsh(*p);
     quantum_walsh(width, &t);
+
     if (compare(p, &t)) {
+        ParallelLogger(stderr, "WALSH PART FAILED\n");
         return;
+    } else {
+
+        ParallelLogger(stderr, "WALSH PART SUCCEEDED\n");
     }
 //    MPI_Barrier(MPI_COMM_WORLD);
 //    p->print();
@@ -419,15 +431,22 @@ void tests::MulTest()
 
     p->allocSharedMem(ctl_id);
     quantum_addscratch(ctl_id, &t);
+
     if (compare(p, &t)) {
+        ParallelLogger(stderr, "SHARED_PART FAILED\n");
         return;
+    } else {
+        ParallelLogger(stderr, "SHARED_PART SUCCEEDED\n");
     }
 
     ApplyNot(*p, 2 * swidth + 2);
     quantum_sigma_x(2 * swidth + 2, &t);
 
     if (compare(p, &t)) {
+        ParallelLogger(stderr, "SIGMA FAILED\n");
         return;
+    } else {
+        ParallelLogger(stderr, "SIGMA SUCCEEDED\n");
     }
 
 
@@ -435,8 +454,14 @@ void tests::MulTest()
     Multiplier *mp = new Multiplier(*p, N, swidth, a, ctl_id);
     *p = mp->perform();
     mul_mod_n(N, a, ctl_id, swidth, &t);
+
+
+
     if (compare(p, &t)) {
+        ParallelLogger(stderr, "SHARED_PART FAILED\n");
         return;
+    } else {
+        ParallelLogger(stderr, "SHARED_PART SUCCEEDED\n");
     }
 
     /*for (int i = 1; i < N; i++) {
@@ -461,6 +486,181 @@ void tests::MulTest()
     quantum_delete_qureg(&t);
     ParallelLogger(stderr, "TEST PASSED\n");
 }
+
+
+namespace
+{
+    int get_dim(int_t n) {
+        int_t i = 0;
+        while (static_cast<int_t>(1<< i) < n) {
+            i++;
+        }
+        return i;
+    }
+}
+
+#include <noise.h>
+void tests::matrix_test()
+{
+    ParallelLogger(stderr, "MATRIX TEST\n");
+    IOperatorNoise *noise = new UnitaryNoiseImpl();
+    for (int i = 1; i <= 3; ++i) {
+        int sz = (1 << i);
+        QMatrix m(sz, sz);
+        for (int j = 0; j < sz; j++) {
+            m(j, j) = 1.0;
+        }
+
+        QMatrix p = noise->GenNoisyMatrix(m);
+        q_log(p.toString());
+        for (int col = 0; col < sz; ++col) {
+            mcomplex sum = 0;
+            for (int row = 0; row < sz; ++row) {
+                sum += p(row, col) * p(row, col);
+            }
+            if (std::abs(sum - 1.0) > g_eps) {
+                q_log(i);
+                q_log(sz);
+                q_log(sum);
+                ParallelLogger(stderr, "MATRIX TEST FAIL\n");
+                return;
+            }
+        }
+    }
+    ParallelLogger(stderr, "MATRIX TEST PASSED\n");
+}
+
+#include <common_impl.h>
+void tests::crauss_test()
+{
+    ParallelLogger(stderr, "CRAUSS TEST\n");
+    gWorld = service_ptr_t<ICommonWorld>(new CommonWorld<NUMAGatesImpl>(CreateNoiseProviderStrDimImpl<NoNoiseImpl, CraussNoiseDensityImpl>("/home/lberserq/tmp/test.xml", 1 )));
+    int pwidth = 2;
+    IQRegister *reg = new UserDefQRegister(pwidth, 0, 1.0, MATRIX_REPRESENTATION);
+    reg->print();
+    ApplyHadamard(*reg, 0);
+    reg->print();
+    ApplyCnot(*reg, 0, pwidth - 1);
+    reg->print();
+    ApplyCnot(*reg, 0, 1);
+    reg->print();
+
+    //ApplyToffoli(*reg, 0, 1, pwidth - 1);
+    reg->print();
+    reg->printNorm();
+
+
+    ParallelLogger(stderr, "CRAUSS TEST PASSED\n");
+}
+
+void tests::shor_test()
+{
+
+    if (ParallelSubSystemHelper::isInited()) {
+        ParallelLogger(stderr, "No shor test in NUMA mode");
+        return;
+    }
+
+    ParallelLogger(stderr, "SHOR TEST\n");
+    const int n = 6;
+    const int a = 5;
+    int lwidth = get_dim(n * n);
+    int swidth = get_dim(n);
+
+    IQRegister *p = new UserDefQRegister(lwidth, 0);
+    quantum_reg qr = quantum_new_qureg(0, lwidth);
+    for(int i=0;i<lwidth;i++) {
+        quantum_hadamard(i, &qr);
+        ApplyHadamard(*p, i);
+    }
+
+
+    if (compare(p, &qr)) {
+        ParallelLogger(stderr, "WALSH PART FAILED\n");
+        return;
+    } else {
+
+        ParallelLogger(stderr, "WALSH PART SUCCEEDED\n");
+    }
+
+    quantum_addscratch(3*swidth+2, &qr);
+    p->allocSharedMem(3 * swidth + 2);
+
+
+    if (compare(p, &qr)) {
+        ParallelLogger(stderr, "SHARED_PART FAILED\n");
+        return;
+    } else {
+        ParallelLogger(stderr, "SHARED_PART SUCCEEDED\n");
+    }
+
+
+    quantum_exp_mod_n(n, a, lwidth, swidth, &qr);
+    expamodn(*p, n, a, lwidth, swidth);
+
+
+    if (compare(p, &qr)) {
+        ParallelLogger(stderr, "EXP_PART FAILED\n");
+        return;
+    } else {
+        ParallelLogger(stderr, "EXP_PART  SUCCEEDED\n");
+    }
+
+
+    for(int i=0;i<3*swidth+2;i++)
+    {
+        quantum_bmeasure(0, &qr);
+    }
+    QRegHelpers::DeleteLocalVars(*p, 3 * swidth + 2);
+
+    if (compare(p, &qr)) {
+        ParallelLogger(stderr, "DELETE_PART FAILED\n");
+        return;
+    } else {
+         ParallelLogger(stderr, "DELETE_PART SUCCEEDED\n");
+    }
+
+    quantum_qft(lwidth, &qr);
+    QFT::ApplyQFT(*p, lwidth);
+
+    if (compare(p, &qr)) {
+        ParallelLogger(stderr, "QFT PART FAILED\n");
+        return;
+    } else {
+         ParallelLogger(stderr, "QFT PART SUCCEEDED\n");
+    }
+
+    for(int i=0; i<lwidth/2; i++)
+      {
+        quantum_cnot(i, lwidth-i-1, &qr);
+        quantum_cnot(lwidth-i-1, i, &qr);
+        quantum_cnot(i, lwidth-i-1, &qr);
+
+        ApplyCnot(*p, i, lwidth-i-1);
+        ApplyCnot(*p, lwidth-i-1, i);
+        ApplyCnot(*p, i, lwidth-i-1);
+      }
+
+    if (compare(p, &qr)) {
+        ParallelLogger(stderr, "TEST FAILED\n");
+        return;
+    }
+
+    if (compare(p, &qr)) {
+        ParallelLogger(stderr, "DEINIT PART FAILED\n");
+        return;
+    } else {
+         ParallelLogger(stderr, "DEINIT PART SUCCEEDED\n");
+    }
+
+
+    ParallelLogger(stderr, "TEST PASSED\n");
+
+
+
+
+}
+
 
 
 void tests::expTest() {
@@ -493,10 +693,10 @@ void tests::expTest() {
     }
     dumpVar("EA%N", 0)
     //fprintf(stderr, "TEST PASSED\n");
-    MPI_Barrier(MPI_COMM_WORLD);
+    ParallelSubSystemHelper::barrier();
     //p->print();
     //quantum_print_qureg(t);
-    MPI_Barrier(MPI_COMM_WORLD);
+    ParallelSubSystemHelper::barrier();
 
     for(int i=0;i<3*swidth+2;i++)
     {
@@ -539,9 +739,12 @@ void tests::collapseTest() {
     int swidth = 6;
     quantum_addscratch(swidth, &t);
     p->allocSharedMem(swidth);
+    for (int i = 0; i < swidth / 2; i++) {
+        ApplyCnot(*p, i, width + i);
+        quantum_cnot(i, width + i, &t);
+    }
 
-    quantum_cnot(0, 1, &t);
-    ApplyCnot(*p,0, 1);
+
     for (int i = 0; i < swidth; i++) {
         quantum_bmeasure(0, &t);
     }
@@ -549,6 +752,7 @@ void tests::collapseTest() {
     QRegHelpers::DeleteLocalVars(*p, swidth);
 
     if (compare(p, &t)) {
+        ParallelLogger(stderr, "FAILED\n");
         return;
     }
     ParallelLogger(stderr, "PASSED\n");

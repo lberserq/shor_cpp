@@ -9,6 +9,8 @@ state Measurer::Measure(IQRegister& reg)
 
     // double rnd = drand48();
     double rnd = xGenDrand();
+
+//refactor it
     if (ParallelSubSystemHelper::isInited()) {
         dumpVar(rnd, 0);
         MPI_Bcast(&rnd, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -41,7 +43,7 @@ state Measurer::Measure(IQRegister& reg)
                 }
             }
         }
-        dumpVar(res, static_cast<int>(id))
+        //dumpVar(res, static_cast<int>(id))
         MPI_Bcast(&res, 1, MPI_UNSIGNED_LONG_LONG, id, MPI_COMM_WORLD);
 
         return res;
@@ -55,6 +57,9 @@ state Measurer::Measure(IQRegister& reg)
                     return i;
                 }
             }
+        }
+        if (std::abs(rnd) < g_eps) {
+            return reg.getStatesSize() - 1;
         }
         return -1;
     }

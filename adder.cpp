@@ -23,9 +23,9 @@ Adder::Adder(int a, int n, int width, IQRegister &in):
 IQRegister & Adder::perform()
 {
     addition_n();
-    q_log("addn");
+    //q_log("addn");
     addition_inv(); // disentangle with ancill
-    q_log("addinv");
+    //q_log("addinv");
     return m_reg;
 }
 
@@ -60,8 +60,8 @@ void Adder::gate_add(int x, int x_inv)
             id++;
         }
         full_adder(id, m_width + i, i, i + 1, 2 * m_width);
-        q_log("GATE_ADD");
-        q_log(i);
+        //q_log("GATE_ADD");
+        //q_log(i);
     }
     id = 0;
     if (x & (1 << (m_width - 1))) {
@@ -99,8 +99,8 @@ void Adder::gate_add_inv(int x, int x_inv)
             id++;
         }
         full_adder_inv(id, i, m_width + i, m_width + i + 1, 2 * m_width);
-        q_log("GATE_ADD_INV");
-        q_log(i);
+        //q_log("GATE_ADD_INV");
+        //q_log(i);
     }
 }
 //add x to dest carry in carry_pin xlt is a

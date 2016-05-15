@@ -3,6 +3,7 @@
 #include <cmath>
 #include "config.h"
 #include <common.h>
+#include <cvariant.h>
 #define X_DECLARE_TEMPLATE_MATH_1(__name)\
     template<class T>  T __name(const T&x) {\
         return std::__name(x);\
@@ -138,9 +139,14 @@ namespace QMath
       return i;
   }
 
+  inline uint_type getWidth(const cVariant &n) {
+      return getWidth(static_cast<uint_type>(n.get<int_t>()));
+  }
+
+
   inline uint_type ipow(int a, int b)
   {
-      return std::pow(a, b);
+      return std::floor(std::pow((double)a, b));
   }
 
 

@@ -9,6 +9,13 @@ public:
     QMatrix GenNoisyMatrix(const QMatrix &m);
 };
 
+class CRotNoiseImpl: public IOperatorNoise
+{
+public:
+    QMatrix GenNoisyMatrix(const QMatrix &m);
+};
+
+
 enum {
     CRAUSS_MAX_DIM_V1 = 3
     };
@@ -24,6 +31,7 @@ public:
 class NoNoiseImpl: public IOperatorNoise
 {
 public:
+    //explicit NoNoiseImpl(const std::string &path = std::string()) {}
     QMatrix GenNoisyMatrix(const QMatrix &m) {
         return m;
     }
@@ -31,7 +39,8 @@ public:
 
 class CraussNoiseDensityImpl: public IDensityMatrixNoise
 {
-    std::vector<QMatrix> m_CraussOps;
+    std::vector<std::pair<QMatrix, std::vector<uint_type> > > m_CraussOps;
+
     int m_dim;
 public:
     CraussNoiseDensityImpl(const std::string &filename, int dim);

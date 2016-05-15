@@ -9,7 +9,8 @@ class CommonWorld: public ICommonWorld
 public:
     CommonWorld(INoiseProvider *noiseProvider)
         : m_gatesprovider(service_ptr_t<IGates>(new IGatesProvider()))
-        , m_noiseprovider(noiseProvider) {
+        , m_noiseprovider(noiseProvider)
+    {
     }
 
 

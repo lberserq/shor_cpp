@@ -8,11 +8,19 @@
 extern service_ptr_t<IQRegister> gRegister;
 namespace QStubs
 {
-    template <class T> void VectorSize(size_t width) {
-        gRegister = service_ptr_t<IQRegister>(new T(width, 0));
+    template <class T> void VectorSize(size_t width, representation_t mode = REG_REPRESENTATION) {
+        gRegister = service_ptr_t<IQRegister>(new T(width, 0, 1.0, mode));
+        q_log("LocalSize");
+        q_log(gRegister->getStatesSize());
+        q_log("ALLSIZE");
+        int sz = ParallelSubSystemHelper::isInited() ? ParallelSubSystemHelper::getConfig().size : 1;
+        q_log((gRegister->getStatesSize() * sz));
     }
 
-    inline void PrintStub(const cVariant &x) {
+
+
+    inline void PrintStub(const cVariant &x)
+    {
         if (ParallelSubSystemHelper::isInited()) {
             q_log(x.toString());
         } else {
@@ -20,34 +28,34 @@ namespace QStubs
         }
     }
 
-    inline void Hadamard(int id1) {
-        ::ApplyHadamard(*gRegister.get(), id1);
+    inline void Hadamard(const cVariant &id1) {
+        ::ApplyHadamard(*gRegister.get(), id1.get<int_t>());
     }
 
-    inline void SigmaX(int id1)  {
-        ::ApplyNot(*gRegister.get(), id1);
-    }
-
-
-    inline void QBitOp(const QMatrix &m, int id1) {
-        ::ApplyQbitMatrix(m, *gRegister.get(), id1);
+    inline void SigmaX(const cVariant &id1)  {
+        ::ApplyNot(*gRegister.get(), id1.get<int_t>());
     }
 
 
-    inline void DiQBitOp(const QMatrix &m, int id1, int id2) {
-        ::ApplyDiQbitMatrix(m, *gRegister.get(), id1, id2);
+    inline void QBitOp(const QMatrix &m, const cVariant &id1) {
+        ::ApplyQbitMatrix(m, *gRegister.get(), id1.get<int_t>());
     }
 
-    inline void TriQBitOp(const QMatrix &m, int id1, int id2, int id3) {
-        ::ApplyTriQbitMatrix(m, *gRegister.get(), id1, id2, id3);
+
+    inline void DiQBitOp(const QMatrix &m, const cVariant &id1, const cVariant &id2) {
+        ::ApplyDiQbitMatrix(m, *gRegister.get(), id1.get<int_t>(), id2.get<int_t>());
     }
 
-    inline void CNOT(int id1, int id2) {
-        ::ApplyCnot(*gRegister.get(), id1, id2);
+    inline void TriQBitOp(const QMatrix &m, const cVariant &id1, const cVariant &id2, const cVariant &id3) {
+        ::ApplyTriQbitMatrix(m, *gRegister.get(), id1.get<int_t>(), id2.get<int_t>(), id3.get<int_t>());
     }
 
-    inline void Toffolli(int id1, int id2, int id3) {
-        ::ApplyToffoli(*gRegister.get(),  id1, id2, id3);
+    inline void CNOT(const cVariant &id1, const cVariant &id2) {
+        ::ApplyCnot(*gRegister.get(), id1.get<int_t>(), id2.get<int_t>());
+    }
+
+    inline void Toffolli(const cVariant &id1, const cVariant &id2, const cVariant &id3) {
+        ::ApplyToffoli(*gRegister.get(),  id1.get<int_t>(), id2.get<int_t>(), id3.get<int_t>());
     }
 
 
@@ -106,7 +114,7 @@ namespace QStubs
 
 
 
-    inline void SigmaY(int id1) {
+    inline void SigmaY(const cVariant &id1) {
         QMatrix m(2, 2);
         m(0,0)=m(1, 1) = 0;
         m(0, 1) = -QMath::i;
@@ -116,7 +124,7 @@ namespace QStubs
 
 
 
-    inline void SigmaZ(int id1) {
+    inline void SigmaZ(const cVariant &id1) {
         QMatrix m(2, 2);
         m(0, 0) = m(1, 1) = 0;
         m(0, 1) = -QMath::i;
@@ -124,7 +132,7 @@ namespace QStubs
         QBitOp(m, id1);
     }
 
-    inline void QBitOp(int id1) {
+    inline void QBitOp(const cVariant &id1) {
         QMatrix m(2, 2);
         m(0, 0) = 1;
         m(1, 1) = -1;
@@ -133,35 +141,78 @@ namespace QStubs
     }
 
 
-    inline void Swap(int id1, int id2) {
-        ::ApplySWAP(*gRegister.get(), id1, id2);
+    inline void Swap(const cVariant &id1, const cVariant &id2) {
+        ::ApplySWAP(*gRegister.get(), id1.get<int_t>(), id2.get<int_t>());
     }
 
-    inline void QFT(int start, int width) {
+    inline void QFT(const cVariant &start, const cVariant &width) {
         std::vector<int> idx;
         for (size_t i = 0; i < static_cast<size_t>(width); ++i) {
-            idx.push_back(start + i);
+            idx.push_back(start.get<int_t>() + i);
         }
-        QFT::ApplyQFT(*gRegister.get(), width, idx);
+        ::QFT::ApplyQFT(*gRegister.get(), width.get<int_t>(), idx);
     }
 
-    inline void InvQFT(int start, int width) {
+    inline void InvQFT(const cVariant &start, const cVariant &width) {
         std::vector<int> idx;
         for (size_t i = 0; i < static_cast<size_t>(width); ++i) {
-            idx.push_back(start + i);
+            idx.push_back(start.get<int_t>() + i);
         }
-        QFT::ApplyQFTInv(*gRegister.get(), width, idx);
+        ::QFT::ApplyQFTInv(*gRegister.get(), width.get<int_t>(), idx);
     }
 
-    inline void MeasureBit(int i) {
-        QRegHelpers::DeleteVar(*gRegister.get(), i);
+    inline void MeasureBit(const cVariant &i) {
+        QRegHelpers::DeleteVar(*gRegister.get(), i.get<int_t>());
     }
 
-    inline void ExpModN(int x, int N, int width) {
-        ::expamodn(*gRegister.get(), N, x, gRegister->getWidth(), width);
+    namespace
+    {
+        int get_dim(int_t n) {
+            int_t i = 0;
+            while (static_cast<int_t>(1<< i) < n) {
+                i++;
+            }
+            return i;
+        }
     }
 
+    inline void ExpModN(const cVariant &x, const cVariant &N, const cVariant &width) {
+        int_t Ni = N.get<int_t>();
+        int_t all_width = get_dim(Ni  * Ni);
+        int_t width_local = get_dim(Ni);
+        int_t local_variables_size = 3 * width_local + 2;
+        int_t currentWidth = gRegister.get()->getWidth();
+        if (currentWidth < local_variables_size + all_width)
+            gRegister->allocSharedMem(local_variables_size + all_width - currentWidth);
 
+        q_log("LocalSize");
+        q_log(gRegister->getStatesSize());
+        q_log("ALLSIZE");
+        int sz = ParallelSubSystemHelper::isInited() ? ParallelSubSystemHelper::getConfig().size : 1;
+        q_log(gRegister->getStatesSize() * sz);
+
+        //expamodn(*tmp, n, a, all_width, width_local);
+        if (width.get<int_t>() > local_variables_size) {
+            width_local = width.get<int_t>() - (local_variables_size - width_local);
+        }
+
+        ::expamodn(*gRegister.get(), N.get<int_t>(), x.get<int_t>(), all_width, width_local);
+        QRegHelpers::DeleteLocalVars(*gRegister.get(), local_variables_size);
+    }
+
+    inline void ShiftLeft(const cVariant &x) {
+        int_t x_i = x.get<int_t>();
+        for (int_t i = 0; i < x_i; i++) {
+            Swap(x_i + i, i);
+        }
+    }
+
+    inline void ShiftRight(const cVariant &) {
+    }
+
+    inline void PrintReg() {
+        gRegister->print();
+    }
 }
 namespace QMath {
     inline std::vector<cVariant> fracApprox(uint_type c, uint_type q,  uint_type width)

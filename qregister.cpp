@@ -13,12 +13,18 @@ StaticQRegister::StaticQRegister(int width, state startState, const mcomplex &am
     m_width(width),
     m_representation(mode)
 {
-    m_states.resize(static_cast<state>(1 << width));
+    if (m_representation == MATRIX_REPRESENTATION) {
+        m_width *= 2;
+    }
+    m_states.resize(static_cast<state>(1ll << m_width));
     m_states[startState] = amplitude;
+//    if (m_representation == MATRIX_REPRESENTATION) {
+//        m_states[startState + m_width / 2] = amplitude;
+//    }
 }
 
 size_t StaticQRegister::getWidth() const {
-    return m_width;
+    return m_representation == REG_REPRESENTATION  ? m_width : m_width / 2;
 }
 
 
@@ -39,7 +45,11 @@ void StaticQRegister::setStates(const std::vector<mcomplex> &v)
 
 
 void StaticQRegister::allocSharedMem(int width) {
-    m_width += width;
+    if (m_representation == MATRIX_REPRESENTATION) {
+        m_width += width * 2;
+    } else {
+        m_width += width;
+    }
     m_states.resize(static_cast<state>(1 << m_width));
     int m_sz = m_states.size();
     for (int i = m_sz - 1; i >= 0; i--) {
@@ -119,7 +129,7 @@ representation_t StaticQRegister::getRepresentation() const {
 
 void StaticQRegister::print() const
 {
-    MPI_Barrier(MPI_COMM_WORLD);
+    ParallelSubSystemHelper::barrier();
     state m_sz = m_states.size();
     for(state i = 0; i < m_sz; i++)
     {
@@ -169,18 +179,33 @@ SharedQSimpleQRegister::SharedQSimpleQRegister(int width, state startState, cons
     m_representation(mode),
     m_global_width(width)
 {
+
+    if (m_representation == MATRIX_REPRESENTATION) {
+        m_global_width *= 2;
+    }
+
     m_cfg = ParallelSubSystemHelper::getConfig();
-    m_localstates.resize(static_cast<state>(1 << width) / m_cfg.size);
+    m_localstates.resize(static_cast<state>(1 << m_global_width) / m_cfg.size);
     m_local_size = m_localstates.size();
     m_local_offset = m_cfg.rank *  m_localstates.size();
     if (startState >= m_local_offset
             && startState < m_local_offset + m_localstates.size()) {
         m_localstates[startState - m_local_offset] = amplitude;
     }
+
+
+//    uint_type other_id = startState + static_cast<uint_type>(1u << (m_global_width / 2));
+//    if (m_representation == MATRIX_REPRESENTATION && other_id  >= m_local_offset
+//            && other_id < m_local_offset + m_localstates.size()) {
+//        m_localstates[other_id - m_local_offset] = amplitude;
+//    }
+
+
+
 }
 
 size_t SharedQSimpleQRegister::getWidth() const {
-    return m_global_width;
+    return m_representation == REG_REPRESENTATION  ? m_global_width : m_global_width / 2;
 }
 
 std::vector<mcomplex> & SharedQSimpleQRegister::getStates() {
@@ -216,12 +241,13 @@ size_t SharedQSimpleQRegister::getOffset() const {
  */
 
 void SharedQSimpleQRegister::allocSharedMem(int width) {
-    m_global_width += width;
+    uint_type width_p = width * ((m_representation == REG_REPRESENTATION) ? 1 : 2);
+    m_global_width += width_p;
     m_localstates.resize(static_cast<state>(1 << m_global_width) / m_cfg.size);
     for (int i = m_localstates.size() - 1; i >= 0; i--) {
         //state curr_state = i + m_local_offset;
         if (i && std::abs(m_localstates[i]) > g_eps) {
-            m_localstates[i << width] = m_localstates[i];
+            m_localstates[i << width_p] = m_localstates[i];
             m_localstates[i] = 0;
         }
     }
@@ -262,9 +288,9 @@ void SharedQSimpleQRegister::print() const{
         state m_sz = fullReg.size();
         for(state i = 0; i < m_sz; i++)
         {
-                    if (std::abs(fullReg[i]) < g_eps) {
-                        continue;
-                    }
+//                    if (std::abs(fullReg[i]) < g_eps) {
+//                        continue;
+//                    }
             float f = std::pow(std::abs(fullReg[i]), 2);
             fprintf(stderr, "%lf + %lfi|%lli> (%e) (|", fullReg[i].real(),
                     fullReg[i].imag(), i,
@@ -330,7 +356,6 @@ void SharedQSimpleQRegister::collapseState(int id, long double amplProb) {
     new_st.resize(size);
     new_ampls.resize(size);
     m_global_width = (m_global_width == 0) ? 0 : m_global_width - 1;
-//    m_global_width--;
     long double gsum = 0;
     MPI_Allreduce(&sum, &gsum, 1, MPI_LONG_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     sum = gsum;
@@ -394,16 +419,21 @@ namespace QRegHelpers {
                 }
             }
         }
-        long double gprobs = 0.0;
-        MPI_Allreduce(&probs, &gprobs, 1, MPI_LONG_DOUBLE, MPI_SUM,
-                      MPI_COMM_WORLD);
+        if (ParallelSubSystemHelper::isInited()) {
+
+            long double gprobs = 0.0;
+            MPI_Allreduce(&probs, &gprobs, 1, MPI_LONG_DOUBLE, MPI_SUM,
+                          MPI_COMM_WORLD);
+            probs = gprobs;
+        }
 
 
-        probs = gprobs;
 
         //long double rnd_num =  static_cast<long double>(rand()) / RAND_MAX;
         long double rnd_num = xGenDrand();
-        MPI_Bcast(&rnd_num, 1, MPI_LONG_DOUBLE, 0, MPI_COMM_WORLD);
+        if (ParallelSubSystemHelper::isInited()) {
+            MPI_Bcast(&rnd_num, 1, MPI_LONG_DOUBLE, 0, MPI_COMM_WORLD);
+        }
         long double targ_val = 0.0f;
         if (rnd_num> probs) {
             targ_val = 1.0f;
@@ -416,6 +446,16 @@ namespace QRegHelpers {
         //int drank = 0;
         for (int i = 0; i < size; i++) {
             DeleteVar(reg, 0);
+            if (reg.getRepresentation() != REG_REPRESENTATION) {
+                DeleteVar(reg, reg.getWidth());
+            }
+            if (!ParallelSubSystemHelper::isInited())
+            {
+                real_t norm = reg.getLocalNorm();
+                if (std::abs(norm - 1) > 1e-4) {
+                    throw "DeleteVar failed";
+                }
+            }
         }
     }
 
@@ -431,7 +471,7 @@ namespace QRegHelpers {
         if (width > static_cast<int>(in.getWidth() / 2)) {
             throw std::invalid_argument("Invalid width for RegSwapLR");
         }
-        if (ParallelSubSystemHelper::getConfig().size == 1 && false) {
+        if (!ParallelSubSystemHelper::isInited() || ParallelSubSystemHelper::getConfig().size == 1) {
                     std::vector<state> news;
                     std::vector<mcomplex> ampls;
                     size_t m_sz = in.getStatesSize();
