@@ -4,6 +4,8 @@
 #include "qft.h"
 #include "measure.h"
 #include <complex.h>
+#include <qregister.h>
+#include <qreghelper.h>
 #if (__cplusplus >= 201103L)
 #include <ccomplex>
 #endif
@@ -367,7 +369,7 @@ void tests::SwapTest()
     }
     dumpVar("QFT", 0)
     quantum_swaptheleads(width, &t);
-    QRegHelpers::RegSwapLR(width, *p);
+    QRegHelper::RegSwapLR(width, *p);
     if (compare(p, &t)) {
         return;
     }
@@ -611,7 +613,7 @@ void tests::shor_test()
     {
         quantum_bmeasure(0, &qr);
     }
-    QRegHelpers::DeleteLocalVars(*p, 3 * swidth + 2);
+    QRegHelper::DeleteLocalVars(*p, 3 * swidth + 2);
 
     if (compare(p, &qr)) {
         ParallelLogger(stderr, "DELETE_PART FAILED\n");
@@ -701,10 +703,10 @@ void tests::expTest() {
     for(int i=0;i<3*swidth+2;i++)
     {
         quantum_bmeasure(0, &t);
-        QRegHelpers::DeleteLocalVars(*p, 1);
+        QRegHelper::DeleteLocalVars(*p, 1);
 
     }
-    //QRegHelpers::DeleteLocalVars(*p, 3 * swidth + 2);
+    //QRegHelper::DeleteLocalVars(*p, 3 * swidth + 2);
     if (compare(p, &t)) {
         return;
     }
@@ -749,7 +751,7 @@ void tests::collapseTest() {
         quantum_bmeasure(0, &t);
     }
 
-    QRegHelpers::DeleteLocalVars(*p, swidth);
+    QRegHelper::DeleteLocalVars(*p, swidth);
 
     if (compare(p, &t)) {
         ParallelLogger(stderr, "FAILED\n");
@@ -864,7 +866,7 @@ void tests::fake_test()
         quantum_bmeasure(0, &t);
     }
     ParallelLogger(stderr, "libq Bmeasure passed\n")
-    QRegHelpers::DeleteLocalVars(*p, SharedMem);
+    QRegHelper::DeleteLocalVars(*p, SharedMem);
     ParallelLogger(stderr, "Our Bmeasure passed\n")
             int drank = 3;
     dumpVar("BBBB", drank);

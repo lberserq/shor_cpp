@@ -12,7 +12,6 @@ state Measurer::Measure(IQRegister& reg)
 
 //refactor it
     if (ParallelSubSystemHelper::isInited()) {
-        dumpVar(rnd, 0);
         MPI_Bcast(&rnd, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         std::vector<double> blockNorms;
         blockNorms.resize(ParallelSubSystemHelper::getConfig().size);

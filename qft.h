@@ -1,6 +1,6 @@
 #ifndef QFT_H
 #define QFT_H
-#include "qregister.h"
+#include <iqregister.h>
 class QFT
 {
 

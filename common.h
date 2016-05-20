@@ -1,7 +1,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 #include "qmatrix.h"
-#include "qregister.h"
+#include <iqregister.h>
 #include <icommonworld.h>
 #include <measure.h>
 #include <cstdlib>

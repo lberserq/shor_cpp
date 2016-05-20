@@ -2,6 +2,7 @@
 #include "qmatrix.h"
 #include "common.h"
 #include "config.h"
+#include "qreghelper.h"
 
 /*!
  * \brief Adder::Adder
@@ -41,7 +42,7 @@ void Adder::addition_inv()
 {
     ApplyCnot(m_reg, 2 * m_width + 1, 2 * m_width);
     gate_add_inv((1 << m_width) - m_a,  m_N - m_a);
-    QRegHelpers::RegSwapLR(m_width, m_reg);
+    QRegHelper::RegSwapLR(m_width, m_reg);
     find_xlt(m_a);
 }
 

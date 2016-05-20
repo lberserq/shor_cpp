@@ -1,6 +1,6 @@
 #ifndef IGATES_H
 #define IGATES_H
-#include <qregister.h>
+#include <iqregister.h>
 #include <qmatrix.h>
 struct IGates {
     /*!

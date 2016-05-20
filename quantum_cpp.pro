@@ -11,7 +11,7 @@ QT       -= gui
 TARGET = quantum_cpp
 CONFIG   += console
 CONFIG   -= app_bundle
-QMAKE_CXXFLAGS += -Wall -std=c++98 -lquantum -fopenmp -DUSE_NOISE -DCR_NOISE -O0 -g
+QMAKE_CXXFLAGS += -Wall -std=c++11 -lquantum -fopenmp -DUSE_NOISE -DCR_NOISE -O3 -g
 TEMPLATE = app
 
 QMAKE_INCDIR +=  /home/lberserq/svn/lq/libquantum-1.1.1/.libs/
@@ -33,7 +33,8 @@ SOURCES += main.cpp \
     tests.cpp \
     xml_parsers.cpp \
     gatesimpl.cpp \
-    noise.cpp
+    noise.cpp \
+    regdeserializer.cpp
 
 HEADERS += \
     qregister.h \
@@ -57,4 +58,8 @@ HEADERS += \
     qmath.h \
     qscript_stubs.h \
     cvariant.h \
-    parallelsubsystemcommon.h
+    parallelsubsystemcommon.h \
+    regdeserializer.h \
+    iregdeserializer.h \
+    iqregister.h \
+    qreghelper.h

@@ -17,8 +17,6 @@ void OpenMPGatesImpl::ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0
 #endif
     std::vector<mcomplex> ampls(reg.getStates().size(), 0);
     state st_sz = reg.getStatesSize();
-    //int m_w = reg.getWidth();
-    //int local_id0 = m_w - id0 - 1;
     int local_id0 = id0;
     int alpha = (reg.getRepresentation() == REG_REPRESENTATION) ? 1 : 2;
     if (local_id0 >= alpha * static_cast<int>(reg.getWidth())) {

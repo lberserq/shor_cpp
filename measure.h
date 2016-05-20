@@ -1,6 +1,6 @@
 #ifndef MEASURE_H
 #define MEASURE_H
-#include "qregister.h"
+#include <iqregister.h>
 /*!
  *\class
  *\brief static class with method Measure(Measured register with the "natural" basis

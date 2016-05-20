@@ -5,6 +5,7 @@
 #include <qmath.h>
 #include <qft.h>
 #include <multiplier.h>
+#include <qreghelper.h>
 extern service_ptr_t<IQRegister> gRegister;
 namespace QStubs
 {
@@ -22,7 +23,7 @@ namespace QStubs
     inline void PrintStub(const cVariant &x)
     {
         if (ParallelSubSystemHelper::isInited()) {
-            q_log(x.toString());
+            q_log_always(x.toString());
         } else {
             std::cerr << x.toString() << std::endl;
         }
@@ -162,7 +163,7 @@ namespace QStubs
     }
 
     inline void MeasureBit(const cVariant &i) {
-        QRegHelpers::DeleteVar(*gRegister.get(), i.get<int_t>());
+        QRegHelper::DeleteVar(*gRegister.get(), i.get<int_t>());
     }
 
     namespace
@@ -197,7 +198,7 @@ namespace QStubs
         }
 
         ::expamodn(*gRegister.get(), N.get<int_t>(), x.get<int_t>(), all_width, width_local);
-        QRegHelpers::DeleteLocalVars(*gRegister.get(), local_variables_size);
+        QRegHelper::DeleteLocalVars(*gRegister.get(), local_variables_size);
     }
 
     inline void ShiftLeft(const cVariant &x) {

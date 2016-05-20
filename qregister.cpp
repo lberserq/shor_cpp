@@ -1,4 +1,4 @@
-#include "qregister.h"
+#include <qregister.h>
 #include "common.h"
 #include <cstdio>
 #include <math.h>
@@ -403,7 +403,7 @@ void SharedQSimpleQRegister::collapseState(int id, long double amplProb) {
 }
 
 
-namespace QRegHelpers {
+namespace QRegHelper {
 
     void DeleteVar(IQRegister &reg, int id)
     {

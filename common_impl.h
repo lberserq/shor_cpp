@@ -3,6 +3,7 @@
 #include "gatesimpl.h"
 #include "noise.h"
 #include "commonworld.h"
+#include "qregister.h"
 
 #endif // COMMON_IMPL_H
 

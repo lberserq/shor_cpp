@@ -1,7 +1,7 @@
 #ifndef INOISE_H
 #define INOISE_H
-#include "qmatrix.h"
-#include "qregister.h"
+#include <qmatrix.h>
+#include <iqregister.h>
 
 struct IOperatorNoise {
     virtual QMatrix GenNoisyMatrix(const QMatrix &m) = 0;

@@ -286,17 +286,17 @@ void ApplyToffoli(IQRegister &reg, int id0, int id1, int id2) {
 
 void ApplyFToffoli(IQRegister &/*reg*/, int /*id0*/, int /*id1*/, int /*id2*/)
 {
-    //    int sz = reg.getStates().size();
-    //    for (int i = 0; i < sz; i++){
-    //        state st = (reg.getStates())[i];
-    //        int st_id0 = (st & static_cast<state>(1 << id0));
-    //        int st_id1 = (st & static_cast<state>(1 << id1));
-    //        if (st_id0 != 0 && st_id1 != 0) {
-    //            st ^= static_cast<state>(1 << id2);
-    //            reg.getStates()[i] = st;
-    //        }
+//        int sz = reg.getStates().size();
+//        for (int i = 0; i < sz; i++){
+//            state st = (reg.getStates())[i];
+//            int st_id0 = (st & static_cast<state>(1 << id0));
+//            int st_id1 = (st & static_cast<state>(1 << id1));
+//            if (st_id0 != 0 && st_id1 != 0) {
+//                st ^= static_cast<state>(1 << id2);
+//                reg.getStates()[i] = st;
+//            }
 
-    //    }
+//        }
 }
 
 
@@ -333,11 +333,11 @@ void ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1)
 
     gWorld->GetGatesProvider()->ApplyDiQbitMatrix(mEfficient, reg, id0, id1);
 
-//    if (reg.getRepresentation() != REG_REPRESENTATION) {
-//        gWorld->GetGatesProvider()->ApplyDiQbitMatrix(mEfficient.conj(), reg,
-//                                                      id0 + reg.getWidth(),
-//                                                      id1 + reg.getWidth());
-//    }
+    if (reg.getRepresentation() != REG_REPRESENTATION) {
+        gWorld->GetGatesProvider()->ApplyDiQbitMatrix(mEfficient.conj(), reg,
+                                                      id0 + reg.getWidth(),
+                                                      id1 + reg.getWidth());
+    }
 
     if (gWorld->GetNoiseProvider()->GetDensityMatrixNoise()
             && reg.getRepresentation() == MATRIX_REPRESENTATION) {
@@ -356,12 +356,12 @@ void ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1, int
 
     gWorld->GetGatesProvider()->ApplyTriQbitMatrix(mEfficient, reg,  id0, id1, id2);
 
-//    if (reg.getRepresentation() != REG_REPRESENTATION) {
-//        gWorld->GetGatesProvider()->ApplyTriQbitMatrix(mEfficient.conj(), reg,
-//                                                      id0 + reg.getWidth(),
-//                                                      id1 + reg.getWidth(),
-//                                                      id2 + reg.getWidth());
-//    }
+    if (reg.getRepresentation() != REG_REPRESENTATION) {
+        gWorld->GetGatesProvider()->ApplyTriQbitMatrix(mEfficient.conj(), reg,
+                                                      id0 + reg.getWidth(),
+                                                      id1 + reg.getWidth(),
+                                                      id2 + reg.getWidth());
+    }
 
     if (gWorld->GetNoiseProvider()->GetDensityMatrixNoise()
             && reg.getRepresentation() == MATRIX_REPRESENTATION) {

@@ -19,7 +19,9 @@ typedef std::complex<real_t> mcomplex;
 #include <mpi.h>
 
 #define EKA_DECLARE_IID(x)\
-    int __eka__id = x;\
+    enum {\
+        int __eka__id = x;\
+    };\
 
 #ifdef _MSC_VER
 typedef  unsigned int result_t;
@@ -147,21 +149,26 @@ namespace ParallelSubSystemHelper {
     dumparray(vec.begin(), vec.size(), Rank);\
 }
 
-
-
-#define reduce_helper
-#define ENABLE_LOG
-#ifdef ENABLE_LOG
-#define q_log(x) \
+#define q_log_always(x) \
 {\
     if (ParallelSubSystemHelper::isInited()){\
         dumpVar((x), 0);}\
     else{\
         std::cerr << (x) << std::endl;}\
 }
+
+
+
+#define reduce_helper
+#define ENABLE_LOG
+#ifdef ENABLE_LOG
+#define q_log(x) q_log_always(x)
 #else
 #define q_log(x)
 #endif
+
+
+
 enum
 {
         XML_LOAD_FAILED = 100,

@@ -134,7 +134,8 @@ void CraussNoiseDensityImpl::ApplyNoiseForDensityMatrix(IQRegister &reg)
     size_t width = reg.getWidth() * 2;
     if (!m_CraussOps.size())
     {
-        long double val  = xGenNRand();
+        const double errorLevel = 0.05;
+        long double val  = errorLevel * xGenNRand();
         mcomplex p = std::exp(-val * val);
 
         size_t len = (1 << m_dim);
@@ -158,7 +159,7 @@ void CraussNoiseDensityImpl::ApplyNoiseForDensityMatrix(IQRegister &reg)
     std::vector<mcomplex> localRegStates(reg.getStatesSize());
 
     for (size_t i = 0; i < m_CraussOps.size(); i++) {
-        int id0 = 0, id1 = 1, id2 = 2;
+        int id0 = 1, id1 = 1, id2 = 2;
         if (m_CraussOps[i].second.size()) {
             id0 = m_CraussOps[i].second[0];
         }

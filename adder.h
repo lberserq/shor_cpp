@@ -1,6 +1,6 @@
 #ifndef ADDER_H
 #define ADDER_H
-#include "qregister.h"
+#include <iqregister.h>
 //adder inspired by ideas  in libquantum adder
 /*!
  * \brief The Adder class
