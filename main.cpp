@@ -241,7 +241,7 @@ void shor_test() {
     }
 }
 
-#include <common/infra/xml_parsers.h>
+#include <common/infra/xmlparsers.h>
 void xml_test() {
     q_log("XML_TEST");
     XmlParser parser("/home/lberserq/tmp/test.xml");

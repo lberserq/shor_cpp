@@ -28,7 +28,6 @@ QMAKE_LINK = mpicxx
 SOURCES += main.cpp \
     src/impls/infra/common/qmatrix.cpp \
     src/impls/infra/common/regdeserializer.cpp \
-    src/impls/infra/common/xml_parsers.cpp \
     src/impls/quantum/common/adder.cpp \
     src/impls/quantum/common/common.cpp \
     src/impls/quantum/common/measure.cpp \
@@ -37,18 +36,20 @@ SOURCES += main.cpp \
     src/impls/quantum/common/qreghelper.cpp \
     src/impls/quantum/gates/mpi/mpi_gatesimpl.cpp \
     src/impls/quantum/gates/omp/omp_gatesimpl.cpp \
-    src/impls/quantum/noise/noise.cpp \
     src/impls/quantum/register/shared/sharedqregister.cpp \
     src/impls/quantum/register/single/singleqregister.cpp \
     tests/tests.cpp \
-    src/impls/infra/common/common_rand.cpp
+    src/impls/infra/common/common_rand.cpp \
+    src/impls/infra/common/xmlparsers.cpp \
+    src/impls/quantum/noise/crauss/crauss_noise.cpp \
+    src/impls/quantum/noise/crot/crot_noise.cpp \
+    src/impls/quantum/noise/unitary/unitary_noise.cpp
 
 HEADERS += \
     include/common/infra/commonworld.h \
     include/common/infra/parallelsubsystemcommon.h \
     include/common/infra/qscript_stubs.h \
     include/common/infra/regdeserializer.h \
-    include/common/infra/xml_parsers.h \
     include/common/quantum/adder.h \
     include/common/quantum/common.h \
     include/common/quantum/multiplier.h \
@@ -81,4 +82,11 @@ HEADERS += \
     src/impls/quantum/gates/gates_all.h \
     include/common/infra/common_func.h \
     include/common/infra/common_rand.h \
-    include/common/quantum_common_circuits.h
+    include/common/quantum_common_circuits.h \
+    include/common/infra/xmlparsers.h \
+    src/impls/quantum/noise/crauss/crauss_noise.h \
+    src/impls/quantum/noise/crot/crot_noise.h \
+    src/impls/quantum/noise/unitary/unitary_noise.h \
+    src/impls/quantum/noise/noise_random.h \
+    src/impls/quantum/noise/stubs/stubs_noise.h \
+    src/impls/quantum/noise/simple_noise_provider.h

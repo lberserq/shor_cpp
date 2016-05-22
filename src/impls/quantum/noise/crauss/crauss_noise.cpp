@@ -1,76 +1,9 @@
-#include "noise.h"
+#include "crauss_noise.h"
 #include <common/quantum/common.h>
 #include <iface/infra/icommonworld.h>
 #include <common/infra/parallelsubsystemcommon.h>
-#include <common/infra/xml_parsers.h>
-
-#if __cplusplus >= 201103L
-#include <random>
-#endif
-namespace
-{
-#if __cplusplus < 201103L
-    long  double xGenNRand() {
-        const int N = 20;
-        double sum = 0;
-        for (int i = 0; i < N; i++) {
-            sum += drand48();
-        }
-        return sum - N / 2;
-    }
-#else
-    long double xGenNRand()
-    {
-        static std::random_device rd;
-        static std::mt19937 gen(rd());
-        static std::normal_distribution<long double> d;
-        return d(gen);
-    }
-#endif
-}
-
-
-QMatrix UnitaryNoiseImpl::GenNoisyMatrix(const QMatrix &m)
-{
-    const double errorLevel = 0.1f;
-    int width = m.getRowsCount();
-    QMatrix res(width, width);
-    for (unsigned i = 0; i < static_cast<state>(width); i += 2) {
-        for (unsigned j = 0; j < static_cast<state>(width); j += 2) {
-            if (i == j) {
-                long double val = errorLevel * xGenNRand();
-                res(i, j) = cos(val);
-                res(i + 1, j + 1) = res(i, j);
-                res(i, j + 1) = sin(val);
-                res(i + 1, j) = -res(i, j + 1);
-            }
-        }
-    }
-    return res * m;
-}
-
-
-QMatrix CRotNoiseImpl::GenNoisyMatrix(const QMatrix &m)
-{
-    double errorLevel = 0.1f;
-    if (m.getColumnsCount() > 4) {
-        return m;
-    }
-
-    double xi = xGenNRand();
-    QMatrix res(m.getRowsCount(), m.getColumnsCount());
-    if (m.getColumnsCount() == 2) {
-        res(0, 0) = res(1, 1)  = cos(xi * errorLevel);
-        res(1, 0) = - res(0, 1) = sin(xi * errorLevel);
-    } else {
-
-        res(0, 0) = res(1, 1) = res(2, 2) = 1.0;
-        res(3, 3) = std::exp(-mcomplex(0, 1) * errorLevel * xi);
-    }
-    return m * res;
-}
-
-
+#include <common/infra/xmlparsers.h>
+#include "../noise_random.h"
 
 CraussNoiseImpl::CraussNoiseImpl(const std::string &fileName)
 {
@@ -104,14 +37,6 @@ QMatrix CraussNoiseImpl::GenNoisyMatrix(const QMatrix &m)
     return res;
 }
 
-
-//#if __cplusplus < 201103L
-//extern template ParallelSubSystemHelper::thread::parallelAddAssign<mcomplex>(mcomplex *, mcomplex *, size_t);
-//#else
-//extern template void ParallelSubSystemHelper::thread::parallelAddAssign<mcomplex>(mcomplex *, mcomplex *, size_t);
-//#endif
-
-
 extern service_ptr_t<ICommonWorld> gWorld;
 
 CraussNoiseDensityImpl::CraussNoiseDensityImpl(const std::string &fileName, int dim):
@@ -130,7 +55,6 @@ void CraussNoiseDensityImpl::ApplyNoiseForDensityMatrix(IQRegister &reg)
 {
     if (!isFin)
         return;
-    //IGates * gatesProvider = gWorld->GetGatesProvider();
     size_t width = reg.getWidth() * 2;
     if (!m_CraussOps.size())
     {

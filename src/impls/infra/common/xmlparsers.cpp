@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <common/infra/qscript_stubs.h>
 #include <common/config.h>
-#include <common/infra/xml_parsers.h>
+#include <common/infra/xmlparsers.h>
 
 XmlParser::XmlParser(const char *path)
 {
