@@ -1,26 +1,27 @@
 ﻿#define STEST
-//#define SELFTEST
+#define SELFTEST
 
 bool isFin = false;
 #ifdef SELFTEST
-#include "config.h"
-#include "common.h"
-#include <iqregister.h>
-#include "common_lib.h"
+#include <common/config.h>
+#include <common/quantum/common.h>
+#include <iface/quantum/iqregister.h>
+#include <common/quantum_common_lib.h>
 #include <cstdio>
 #include <cstdlib>
-#include <qmath.h>
-#include <cvariant.h>
-#include <qscript_stubs.h>
+#include <common/qmath.h>
+#include <common/cvariant.h>
+#include <common/infra/qscript_stubs.h>
+#include <common/quantum_common_impl.h>
 #define GT
 #define STATS_ONLY
 
-typedef StaticQRegister	UserDefQRegister;
+typedef SingleQRegister	UserDefQRegister;
 #ifdef GT
-#include "tests.h"
+#include "tests/tests.h"
 
 int test2() {
-    IQRegister *tmp = new SharedQSimpleQRegister(4, 2);
+    IQRegister *tmp = new SharedSimpleQRegister(4, 2);
     for (int i = 0;i < 4; i++) {
         ApplyHadamard(*tmp, i);
     }
@@ -30,20 +31,20 @@ int test2() {
 }
 
 void gates_test() {
-//    tests::width = 3;
-//    tests::HadmardTest();
-//    tests::CNOTTest();
-//    tests::NotTest();
-//    tests::SwapTest();
-//    tests::ToffoliTest();
-//    tests::AdderTest();
-//    tests::MulTest();
-//   // tests::expTest();
-//    tests::QFTTest();
-//    tests::MeasureTest();
-//    tests::fake_test();
-//    tests::collapseTest();
-//    tests::shor_test();
+    tests::width = 5;
+    tests::HadmardTest();
+    tests::CNOTTest();
+    tests::NotTest();
+    tests::SwapTest();
+    tests::ToffoliTest();
+    tests::AdderTest();
+    tests::MulTest();
+   // tests::expTest();
+    tests::QFTTest();
+    tests::MeasureTest();
+    tests::fake_test();
+    tests::collapseTest();
+    tests::shor_test();
     tests::matrix_test();
     tests::crauss_test();
 }
@@ -88,7 +89,7 @@ enum
 
 
 int shor(uint_type n) {
-    init_rand();
+    initRand();
     //    if (n == 18) {
     //        n = 17 + 1;
     //    }
@@ -240,7 +241,7 @@ void shor_test() {
     }
 }
 
-#include "xml_parsers.h"
+#include <common/infra/xml_parsers.h>
 void xml_test() {
     q_log("XML_TEST");
     XmlParser parser("/home/lberserq/tmp/test.xml");
@@ -248,11 +249,10 @@ void xml_test() {
     q_log("operators_get");
     q_log(resV.size());
 
-    q_log(resV[0].first.toString());
+    //q_log(resV[0].first.toString());
 }
 
 service_ptr_t<ICommonWorld> gWorld;
-#include "common_impl.h"
 
 INoiseProvider * CreateNoiseProvider(const std::string &filename)
 {
@@ -262,7 +262,7 @@ INoiseProvider * CreateNoiseProvider(const std::string &filename)
 void userInit() {
     MPI_Init(NULL, NULL);
     INoiseProvider *noiseProvider = CreateNoiseProvider("fname");
-    gWorld = service_ptr_t<ICommonWorld>(new CommonWorld<NUMAGatesImpl>(noiseProvider));
+    gWorld = service_ptr_t<ICommonWorld>(new CommonWorld<MPIGatesImpl>(noiseProvider));
 }
 
 
@@ -271,7 +271,7 @@ void userFinalize() {
 }
 
 service_ptr_t<IQRegister> gRegister;
-#include <qscript_stubs.h>
+#include <common/infra/qscript_stubs.h>
 int main(int argc, char *argv[])
 {
     try
@@ -331,31 +331,30 @@ int main(int argc, char *argv[])
 
 #else
 
-#include<config.h>
-#include <qmath.h>
-#include <common.h>
-#include <xml_parsers.h>
-#include <common_impl.h>
-#include <noise.h>
-#include <cvariant.h>
-#include <qscript_stubs.h>
+#include <common/config.h>
+#include <common/qmath.h>
+#include <common/quantum_common_lib.h>
+#include <common/infra/xml_parsers.h>
+#include <common/quantum_common_impl.h>
+#include <common/cvariant.h>
+#include <common/infra/qscript_stubs.h>
 
 service_ptr_t<ICommonWorld> gWorld;
 service_ptr_t<IQRegister> gRegister;
-	typedef SharedQSimpleQRegister	UserDefQRegister;
+	typedef SharedSimpleQRegister	UserDefQRegister;
 uint_type measured_value;
 	void UserInit() {
-	init_rand();
+	initRand();
 	MPI_Init(NULL, NULL);
 #ifdef NO_NOISE
-	gWorld = service_ptr_t<ICommonWorld>(new CommonWorld<NUMAGatesImpl>(CreateNoiseProviderStrDimImpl<NoNoiseImpl, NoiseDensityStub>("/home/lberserq/tmp/test.xml", 4 )));
+	gWorld = service_ptr_t<ICommonWorld>(new CommonWorld<MPIGatesImpl>(CreateNoiseProviderStrDimImpl<NoNoiseImpl, NoiseDensityStub>("/home/lberserq/tmp/test.xml", 4 )));
 #else
 #ifdef CR_NOISE
-	gWorld = service_ptr_t<ICommonWorld>(new CommonWorld<NUMAGatesImpl>(CreateNoiseProviderStrDimImpl<NoNoiseImpl, CraussNoiseDensityImpl>("/home/lberserq/tmp/test.xml", 1)));
+	gWorld = service_ptr_t<ICommonWorld>(new CommonWorld<MPIGatesImpl>(CreateNoiseProviderStrDimImpl<NoNoiseImpl, CraussNoiseDensityImpl>("/home/lberserq/tmp/test.xml", 1)));
 #endif
 
 #ifdef UN_NOISE
-	gWorld = service_ptr_t<ICommonWorld>(new CommonWorld<NUMAGatesImpl>(CreateNoiseProviderStrDimImpl<CRotNoiseImpl, NoiseDensityStub>("/home/lberserq/tmp/test.xml", 4 )));
+	gWorld = service_ptr_t<ICommonWorld>(new CommonWorld<MPIGatesImpl>(CreateNoiseProviderStrDimImpl<CRotNoiseImpl, NoiseDensityStub>("/home/lberserq/tmp/test.xml", 4 )));
 #endif
 
 
