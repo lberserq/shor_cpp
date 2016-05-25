@@ -5,11 +5,11 @@ namespace QRegHelper {
     void DeleteVar(IQRegister &reg, int id)
     {
         long double probs = 0.0f;
-        state m_sz = reg.getStates().size();
-        for (state i = 0; i < m_sz; i++) {
+        state_t m_sz = reg.getStates().size();
+        for (state_t i = 0; i < m_sz; i++) {
             if (std::abs(reg.getStates()[i]) > g_eps) {
-                state st = i + reg.getOffset();
-                int state_id = ((st & static_cast<state>(1 << id)) != 0);
+                state_t st = i + reg.getOffset();
+                int state_id = ((st & static_cast<state_t>(1 << id)) != 0);
                 if (!state_id) {
                     mcomplex amp = reg.getStates()[i];
                     probs += std::pow(std::abs(amp), 2);
@@ -19,8 +19,8 @@ namespace QRegHelper {
         if (ParallelSubSystemHelper::isInited()) {
 
             long double gprobs = 0.0;
-            MPI_Allreduce(&probs, &gprobs, 1, MPI_LONG_DOUBLE, MPI_SUM,
-                          MPI_COMM_WORLD);
+            MPI_SAFE_CALL(MPI_Allreduce(&probs, &gprobs, 1, MPI_LONG_DOUBLE, MPI_SUM,
+                          MPI_COMM_WORLD));
             probs = gprobs;
         }
 
@@ -29,7 +29,7 @@ namespace QRegHelper {
         //long double rnd_num =  static_cast<long double>(rand()) / RAND_MAX;
         long double rnd_num = xGenDrand();
         if (ParallelSubSystemHelper::isInited()) {
-            MPI_Bcast(&rnd_num, 1, MPI_LONG_DOUBLE, 0, MPI_COMM_WORLD);
+            MPI_SAFE_CALL(MPI_Bcast(&rnd_num, 1, MPI_LONG_DOUBLE, 0, MPI_COMM_WORLD));
         }
         long double targ_val = 0.0f;
         if (rnd_num> probs) {
@@ -69,18 +69,18 @@ namespace QRegHelper {
             throw std::invalid_argument("Invalid width for RegSwapLR");
         }
         if (!ParallelSubSystemHelper::isInited() || ParallelSubSystemHelper::getConfig().size == 1) {
-                    std::vector<state> news;
+                    std::vector<state_t> news;
                     std::vector<mcomplex> ampls;
                     size_t m_sz = in.getStatesSize();
-                    for (state i  = 0; i < m_sz; i++) {
+                    for (state_t i  = 0; i < m_sz; i++) {
                         if (std::abs(in.getStates()[i]) > g_eps) {
-                            state left = i % static_cast<state>(1 << width);
-                            state right = 0;
+                            state_t left = i % static_cast<state_t>(1 << width);
+                            state_t right = 0;
                             for (int j = 0; j < width; j++) {
-                                right |= i & static_cast<state>(1 << (width + j));
+                                right |= i & static_cast<state_t>(1 << (width + j));
                             }
-                            state x = i ^ (left | right);
-                            x |= static_cast<state>(left << width);
+                            state_t x = i ^ (left | right);
+                            x |= static_cast<state_t>(left << width);
                             x |= (right >> width);
                             news.push_back(x);
                             ampls.push_back(in.getStates()[i]);
@@ -91,7 +91,7 @@ namespace QRegHelper {
                     in.getStates().resize(m_sz);
                     m_sz = news.size();
 
-                    for (state i = 0; i < m_sz; i++) {
+                    for (state_t i = 0; i < m_sz; i++) {
                         in.getStates()[news[i]] = ampls[i];
                     }
         } else {

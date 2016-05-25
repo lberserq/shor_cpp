@@ -4,6 +4,7 @@
 #include <common/quantum_common_lib.h>
 #include <complex.h>
 #include <common/quantum/qreghelper.h>
+#include "../src/impls/infra/serializers/serializers_all.h"
 #if (__cplusplus >= 201103L)
 #include <ccomplex>
 #endif
@@ -32,7 +33,7 @@ int compare(IQRegister *x, quantum_reg *t)
     if (t->width == static_cast<int>(x->getWidth()) ) {
         std::vector<mcomplex> xst = x->getAllReg();
         unsigned char errorFlag = 0;
-        ParallelSubSystemHelper::barrier();
+        ParallelSubSystemHelper::sync::barrier();
         if (!ParallelSubSystemHelper::getConfig().rank) {
             for (int i = 0; i < t->size; i++) {
                 unsigned p = t->state[i];
@@ -56,18 +57,18 @@ int compare(IQRegister *x, quantum_reg *t)
             }
         }
 
-        ParallelSubSystemHelper::barrier();
-        unsigned char gErrorFlag = 0;
+        ParallelSubSystemHelper::sync::barrier();
+        byte_t gErrorFlag = 0;
         MPI_Allreduce(&errorFlag,
                       &gErrorFlag,
                       1,
-                      MPI_UNSIGNED_CHAR,
+                      MPI_BYTE,
                       MPI_LOR,
                       MPI_COMM_WORLD);
         if (gErrorFlag) {
 
             x->print();
-            ParallelSubSystemHelper::barrier();
+            ParallelSubSystemHelper::sync::barrier();
             MPI_Abort(MPI_COMM_WORLD, -1);
             return 1;
         }
@@ -167,7 +168,7 @@ void tests::AdderTest()
 
 void tests::HadmardTest()
 {
-    ParallelSubSystemHelper::barrier();
+    ParallelSubSystemHelper::sync::barrier();
     q_log("HTEST");
     ParallelLogger(stderr, "Hadamard TEST\n");
     int pin = tests::width - 1;
@@ -205,7 +206,7 @@ void tests::HadmardTest()
 
 void tests::CNOTTest() {
 
-    ParallelSubSystemHelper::barrier();
+    ParallelSubSystemHelper::sync::barrier();
     ParallelLogger(stderr, "CNOT TEST\n");
     //const int N = 100;
     const int width = 2;
@@ -405,7 +406,7 @@ void exp_test_fun(IQRegister *p, quantum_reg *t, int a, int N, int swidth, int w
 void tests::MulTest()
 {
 
-    ParallelSubSystemHelper::barrier();
+    ParallelSubSystemHelper::sync::barrier();
     ParallelLogger(stderr, "MULTIPLIER TEST\n");
     const int N = 8;
     //const int width = 4;
@@ -498,7 +499,7 @@ namespace
     }
 }
 
-void tests::matrix_test()
+void tests::MatrixTest()
 {
     ParallelLogger(stderr, "MATRIX TEST\n");
     IOperatorNoise *noise = new UnitaryNoiseImpl();
@@ -528,7 +529,7 @@ void tests::matrix_test()
     ParallelLogger(stderr, "MATRIX TEST PASSED\n");
 }
 
-void tests::crauss_test()
+void tests::CraussTest()
 {
     ParallelLogger(stderr, "CRAUSS TEST\n");
     gWorld = service_ptr_t<ICommonWorld>(new CommonWorld<MPIGatesImpl>(CreateNoiseProviderStrDimImpl<NoNoiseImpl, CraussNoiseDensityImpl>("/home/lberserq/tmp/test.xml", 1 )));
@@ -550,7 +551,38 @@ void tests::crauss_test()
     ParallelLogger(stderr, "CRAUSS TEST PASSED\n");
 }
 
-void tests::shor_test()
+
+void tests::SerializeTest()
+{
+    ParallelLogger(stderr, "SER_TEST\n");
+    int pwidth = 2;
+    service_ptr_t<IQRegister> reg(new UserDefQRegister(pwidth, 0, 1.0, MATRIX_REPRESENTATION));
+    service_ptr_t<IQRegisterFactory> regFactory(new StandardQRegisterFactory<UserDefQRegister>());
+
+    ApplyHadamard(*reg, 0);
+    ApplyCnot(*reg, 0, pwidth - 1);
+    ApplyCnot(*reg, 0, 1);
+
+    ApplyToffoli(*reg, 0, 1, pwidth - 1);
+
+
+    BinaryRegSerializer serializer;
+   // CSerContext context(NULL, 2);
+
+    //serializer.serialize(*reg, context);
+
+    byteArray array1(1024 * 10);
+    CSerContext context2(NULL,-1, NULL, array1);
+    serializer.serialize(*reg, context2);
+    IQRegister *reg2;
+    X_ASSERT(X_SOK == serializer.deserialize(&reg2, context2, *regFactory.get()));
+    dumpvec(context2.buffer, 0);
+
+
+    ParallelLogger(stderr, "SER TEST PASSED\n");
+}
+
+void tests::ShorTest()
 {
 
     if (ParallelSubSystemHelper::isInited()) {
@@ -690,10 +722,10 @@ void tests::expTest() {
     }
     dumpVar("EA%N", 0)
     //fprintf(stderr, "TEST PASSED\n");
-    ParallelSubSystemHelper::barrier();
+    ParallelSubSystemHelper::sync::barrier();
     //p->print();
     //quantum_print_qureg(t);
-    ParallelSubSystemHelper::barrier();
+    ParallelSubSystemHelper::sync::barrier();
 
     for(int i=0;i<3*swidth+2;i++)
     {
@@ -824,8 +856,8 @@ void tests::MeasureTest() {
     if (compare(p, &t)) {
         return;
     }
-    state q = Measurer::Measure(*p);
-    if (q != static_cast<state>(-1)) {
+    state_t q = Measurer::Measure(*p);
+    if (q != static_cast<state_t>(-1)) {
         ParallelLogger(stderr, "TEST PASSED\n");
     } else {
         ParallelLogger(stderr, "TEST FAILED\n");

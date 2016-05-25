@@ -4,7 +4,7 @@
 #include <iface/infra/icommonworld.h>
 void MPIGatesImpl::ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
 {
-    ParallelSubSystemHelper::barrier();
+    ParallelSubSystemHelper::sync::barrier();
     QMatrix resm = m;
 #ifdef USE_NOISE
     if (gWorld->GetNoiseProvider()->GetOperatorNoise()) {
@@ -16,7 +16,7 @@ void MPIGatesImpl::ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
 #endif
     std::vector<mcomplex> ampls(reg.getStates().size(), 0);
     //memset(&ampls[0], 0, ampls.size() * sizeof(ampls[0]));
-    state st_sz = reg.getStatesSize();
+    state_t st_sz = reg.getStatesSize();
 
     int local_id0 = id0;
     int alpha = (reg.getRepresentation() == REG_REPRESENTATION) ? 1 : 2;
@@ -56,7 +56,7 @@ void MPIGatesImpl::ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
 
 
     for (size_t currentNeighbour = 0; currentNeighbour < RealNeighbours.size() + 1; currentNeighbour++) {
-        for (state i = 0; i < st_sz; i++) {
+        for (state_t i = 0; i < st_sz; i++) {
             int g_id = i + reg.getOffset();
             int currentId = get_bit(g_id, local_id0);
             mcomplex currentAmpl = 0.0f;
@@ -103,7 +103,7 @@ void MPIGatesImpl::ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
             }
 
 
-            MPI_Sendrecv_replace(&reg.getStates()[0],
+            MPI_SAFE_CALL(MPI_Sendrecv_replace(&reg.getStates()[0],
                     reg.getStatesSize(),
                     MPI_DOUBLE_COMPLEX,
                     nextNeighbour,
@@ -111,7 +111,7 @@ void MPIGatesImpl::ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
                     prevNeighbour,
                     e_tag,
                     MPI_COMM_WORLD,
-                    &st);
+                    &st));
             int currentId = (RealNeighbours.size() - 1 - currentNeighbour +
                              RealNeighbours.size()) % RealNeighbours.size();
 
@@ -119,12 +119,12 @@ void MPIGatesImpl::ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
         }
     }
     reg.setStates(ampls);
-    ParallelSubSystemHelper::barrier();
+    ParallelSubSystemHelper::sync::barrier();
 }
 
 void MPIGatesImpl::ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1)
 {
-    ParallelSubSystemHelper::barrier();
+    ParallelSubSystemHelper::sync::barrier();
     QMatrix resm = m;
 #ifdef USE_NOISE
     if (gWorld->GetNoiseProvider()->GetOperatorNoise()) {
@@ -135,7 +135,7 @@ void MPIGatesImpl::ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0,
     std::set<int> m_s; m_s.insert(id0); log_str(m_s);
 #endif
     std::vector<mcomplex> ampls(reg.getStates().size(), 0);
-    state st_sz = reg.getStatesSize();
+    state_t st_sz = reg.getStatesSize();
     int local_id0 = id0;
     int local_id1 = id1;
     int alpha = (reg.getRepresentation() == REG_REPRESENTATION) ? 1 : 2;
@@ -151,7 +151,7 @@ void MPIGatesImpl::ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0,
     for (int i = 0; i < OperationDimension; i++) {
         int currId0 = ((i & 0x2) > 0);
         int currId1 = ((i & 0x1) > 0);
-        state currState = reg.getOffset();
+        state_t currState = reg.getOffset();
         currState = set_bit(currState, local_id0, currId0);
         currState = set_bit(currState, local_id1, currId1);
 
@@ -185,7 +185,7 @@ void MPIGatesImpl::ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0,
     int local_index = reg.getOffset();
 
     for (size_t currentNeighbour = 0; currentNeighbour < RealNeighbours.size() + 1; currentNeighbour++) {
-        for (state i = 0; i < st_sz; i++) {
+        for (state_t i = 0; i < st_sz; i++) {
             int g_id = i + reg.getOffset();
             int currentId0 = get_bit(g_id, local_id0);
             int currentId1 = get_bit(g_id, local_id1);
@@ -237,7 +237,7 @@ void MPIGatesImpl::ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0,
             }
 
 
-            MPI_Sendrecv_replace(&reg.getStates()[0],
+            MPI_SAFE_CALL(MPI_Sendrecv_replace(&reg.getStates()[0],
                     reg.getStatesSize(),
                     MPI_DOUBLE_COMPLEX,
                     nextNeighbour,
@@ -245,7 +245,7 @@ void MPIGatesImpl::ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0,
                     prevNeighbour,
                     e_tag,
                     MPI_COMM_WORLD,
-                    &st);
+                    &st));
 
             int currentId = (RealNeighbours.size() - 1 - currentNeighbour +
                              RealNeighbours.size()) % RealNeighbours.size();
@@ -255,13 +255,13 @@ void MPIGatesImpl::ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0,
 
     }
     reg.setStates(ampls);
-    ParallelSubSystemHelper::barrier();
+    ParallelSubSystemHelper::sync::barrier();
 }
 
 void MPIGatesImpl::ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0, int id1, int id2)
 {
 
-    ParallelSubSystemHelper::barrier();
+    ParallelSubSystemHelper::sync::barrier();
     QMatrix resm = m;
 #ifdef USE_NOISE
     if (gWorld->GetNoiseProvider()->GetOperatorNoise()) {
@@ -272,7 +272,7 @@ void MPIGatesImpl::ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0
     std::set<int> m_s; m_s.insert(id0); log_str(m_s);
 #endif
     std::vector<mcomplex> ampls(reg.getStates().size(), 0);
-    state st_sz = reg.getStatesSize();
+    state_t st_sz = reg.getStatesSize();
     int local_id0 = id0;
     int local_id1 = id1;
     int local_id2 = id2;
@@ -291,7 +291,7 @@ void MPIGatesImpl::ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0
         int currId1 = ((i & 0x2) > 0);
         int currId2 = ((i & 0x1) > 0);
 
-        state currState = reg.getOffset();
+        state_t currState = reg.getOffset();
         currState = set_bit(currState, local_id0, currId0);
         currState = set_bit(currState, local_id1, currId1);
         currState = set_bit(currState, local_id2, currId2);
@@ -322,7 +322,7 @@ void MPIGatesImpl::ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0
     const int e_tag = 0x78;
     int local_index = reg.getOffset();
     for (size_t currentNeighbour = 0; currentNeighbour < RealNeighbours.size() + 1; currentNeighbour++) {
-        for (state i = 0; i < st_sz; i++) {
+        for (state_t i = 0; i < st_sz; i++) {
             int g_id = i + reg.getOffset();
 
             int currentId0 = get_bit(g_id, local_id0);
@@ -381,7 +381,7 @@ void MPIGatesImpl::ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0
                 if (prevNeighbour >= 0) throw "ApplyTriQbitMatrix:prevNeighbour >= ParallelSubSystemHelper::getConfig().size";
             }
 
-            MPI_Sendrecv_replace(&reg.getStates()[0],
+            MPI_SAFE_CALL(MPI_Sendrecv_replace(&reg.getStates()[0],
                     reg.getStatesSize(),
                     MPI_DOUBLE_COMPLEX,
                     nextNeighbour,
@@ -389,7 +389,7 @@ void MPIGatesImpl::ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0
                     prevNeighbour,
                     e_tag,
                     MPI_COMM_WORLD,
-                    &st);
+                    &st));
             size_t currentId = (RealNeighbours.size() - 1 - currentNeighbour +
                              RealNeighbours.size()) % RealNeighbours.size();
 
@@ -398,5 +398,5 @@ void MPIGatesImpl::ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0
         }
     }
     reg.setStates(ampls);
-    ParallelSubSystemHelper::barrier();
+    ParallelSubSystemHelper::sync::barrier();
 }

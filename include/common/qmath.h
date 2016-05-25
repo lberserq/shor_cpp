@@ -98,7 +98,7 @@ namespace QMath
       long double maxdenum = 1.0 / static_cast<long double>(width);
       long double val = static_cast<long double>(c) / q;
       long long numerator = 1, denumerator = 0;
-      state numlast = 0, denumlast = 1;
+      state_t numlast = 0, denumlast = 1;
       //const float interpolation_step = g_eps * 1e4 * 5;
       long double ai = val;
       long double step = 0.0f;
@@ -110,8 +110,8 @@ namespace QMath
           if (step * denumerator + denumlast > maxdenum) {
               break;
           }
-          state  savenum = numerator;
-          state savedenum = denumerator;
+          state_t  savenum = numerator;
+          state_t savedenum = denumerator;
           numerator = step * numerator + numlast;
           denumerator = step * denumerator + denumlast;
           numlast = savenum;

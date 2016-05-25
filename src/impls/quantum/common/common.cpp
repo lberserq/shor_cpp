@@ -155,9 +155,15 @@ void log_print()
 }*/
 
 ParallelSubSystemHelper::mpicfg ParallelSubSystemHelper::getConfig() {
-    ParallelSubSystemHelper::mpicfg cfg;
+    static ParallelSubSystemHelper::mpicfg cfg;
+    static bool isDirty = true;
+
+    if (!isDirty)
+        return cfg;
+
     MPI_Comm_rank(MPI_COMM_WORLD, &cfg.rank);
     MPI_Comm_size(MPI_COMM_WORLD, &cfg.size);
+    isDirty = false;
     return cfg;
 }
 
@@ -169,7 +175,7 @@ bool ParallelSubSystemHelper::isInited()
     return false;
 }
 
-void ParallelSubSystemHelper::barrier()
+void ParallelSubSystemHelper::sync::barrier()
 {
     if (isInited()) {
         MPI_Barrier(MPI_COMM_WORLD);
@@ -251,8 +257,8 @@ double errorLevel = 0.001f;
 
 QMatrix genNoise(int w) {
     QMatrix res(1 << w, 1 << w);
-    for (unsigned i = 0; i < static_cast<state>(1 << w); i += 2) {
-        for (unsigned j = 0; j < static_cast<state>(1 << w); j += 2) {
+    for (unsigned i = 0; i < static_cast<state_t>(1 << w); i += 2) {
+        for (unsigned j = 0; j < static_cast<state_t>(1 << w); j += 2) {
             if (i == j) {
                 long double val = errorLevel * xGenDrand();
                 res(i, j) = cos(val);

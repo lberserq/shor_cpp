@@ -54,7 +54,7 @@ void Multiplier::mul()
 
         //(1 << i) *(1 >> i) == 1
         Adder *add = new Adder(((1 << i) * m_a) % m_N, m_N, m_width, m_reg);
-        m_reg = add->perform();
+        add->perform();
         delete add;
 
 
@@ -92,7 +92,7 @@ void Multiplier::mulinv()
         ApplyToffoli(m_reg, m_ctlid, 2 * m_width + 2 + i, tw);
 
         Adder *add = new Adder(m_N - ((1 << i) * m_a) % m_N, m_N, m_width, m_reg);
-        m_reg = add->perform();
+        add->perform();
 
         delete add;
         ApplyToffoli(m_reg, m_ctlid, 2 * m_width + 2 + i, tw);
@@ -135,7 +135,7 @@ IQRegister &expamodn(IQRegister &in, int N, int x, int width_in, int local_width
             pow %= N;
         }
         Multiplier *mp = new Multiplier(in, N, local_width, pow, 3  * local_width + i + 2);
-        in = mp->perform();
+        mp->perform();
 //        q_log("EAXN");
 //        q_log(i);
         delete mp;

@@ -11,7 +11,7 @@
 class Measurer
 {
 public:
-    static state Measure(IQRegister &reg);
+    static state_t Measure(IQRegister &reg);
 };
 
 #endif // MEASURE_H

@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <unistd.h>
 
-state Measurer::Measure(IQRegister& reg)
+state_t Measurer::Measure(IQRegister& reg)
 {
     // double rnd = static_cast<double>(rand()) / RAND_MAX;
 
@@ -13,12 +13,12 @@ state Measurer::Measure(IQRegister& reg)
 
 //refactor it
     if (ParallelSubSystemHelper::isInited()) {
-        MPI_Bcast(&rnd, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_SAFE_CALL(MPI_Bcast(&rnd, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD));
         std::vector<double> blockNorms;
         blockNorms.resize(ParallelSubSystemHelper::getConfig().size);
         double locNorm = reg.getLocalNorm();
-        MPI_Allgather(&locNorm, 1, MPI_DOUBLE, &blockNorms[0], 1, MPI_DOUBLE,
-            MPI_COMM_WORLD);
+        MPI_SAFE_CALL(MPI_Allgather(&locNorm, 1, MPI_DOUBLE, &blockNorms[0], 1, MPI_DOUBLE,
+            MPI_COMM_WORLD));
         double prob = rnd;
         size_t id = 0;
         for (id = 0; id < blockNorms.size() && prob > 0; id++) {
@@ -32,9 +32,9 @@ state Measurer::Measure(IQRegister& reg)
             rnd -= blockNorms[i];
         }
 
-        state res = -1;
+        state_t res = -1;
         if (ParallelSubSystemHelper::getConfig().rank == static_cast<int>(id)) {
-            for (state i = 0; i < reg.getStates().size(); i++) {
+            for (state_t i = 0; i < reg.getStates().size(); i++) {
                 mcomplex ampl = reg.getStates()[i];
                 rnd -= std::abs(ampl) * std::abs(ampl);
                 if (rnd < 0 || std::abs(rnd) < g_eps) {
@@ -44,7 +44,7 @@ state Measurer::Measure(IQRegister& reg)
             }
         }
         //dumpVar(res, static_cast<int>(id))
-        MPI_Bcast(&res, 1, MPI_UNSIGNED_LONG_LONG, id, MPI_COMM_WORLD);
+        MPI_SAFE_CALL(MPI_Bcast(&res, 1, MPI_STATE_T, id, MPI_COMM_WORLD));
 
         return res;
     } else {

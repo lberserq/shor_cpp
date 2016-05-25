@@ -32,33 +32,34 @@ int test2() {
 
 void gates_test() {
     tests::width = 5;
-    tests::HadmardTest();
-    tests::CNOTTest();
-    tests::NotTest();
-    tests::SwapTest();
-    tests::ToffoliTest();
-    tests::AdderTest();
-    tests::MulTest();
-   // tests::expTest();
-    tests::QFTTest();
-    tests::MeasureTest();
-    tests::fake_test();
-    tests::collapseTest();
-    tests::shor_test();
-    tests::matrix_test();
-    tests::crauss_test();
+//    tests::HadmardTest();
+//    tests::CNOTTest();
+//    tests::NotTest();
+//    tests::SwapTest();
+//    tests::ToffoliTest();
+//    tests::AdderTest();
+//    tests::MulTest();
+//   // tests::expTest();
+//    tests::QFTTest();
+//    tests::MeasureTest();
+//    tests::fake_test();
+//    tests::collapseTest();
+//    tests::shor_test();
+//    tests::matrix_test();
+//    tests::crauss_test();
+    tests::SerializeTest();
 }
 #endif
 
-state ipow(state base, int exp) {
-    state res = 1;
+state_t ipow(state_t base, int exp) {
+    state_t res = 1;
     for (int i = 0; i < exp; i++, res *= base);
     return res;
 }
 
-int get_dim(state n) {
-    state i = 0;
-    while (static_cast<state>(1<< i) < n) {
+int get_dim(state_t n) {
+    state_t i = 0;
+    while (static_cast<state_t>(1<< i) < n) {
         i++;
     }
     return i;
@@ -103,7 +104,7 @@ int shor(uint_type n) {
         printf("Too big number\n");
         return MAX_TICK_COUNT;
     }
-    state m_state = 0;
+    state_t m_state = 0;
     int tick_count = 0;
 
 
@@ -121,13 +122,13 @@ int shor(uint_type n) {
         q_log("ALLOC SHMEM");
 
 
-        ParallelSubSystemHelper::barrier();
+        ParallelSubSystemHelper::sync::barrier();
         uint_type a = xGenIrand() % n;
         while (QMath::gcd(a, n) > 1 || a < 2) {
             a = xGenIrand() % n;
             q_log("GCD ITERATION");
         }
-        ParallelSubSystemHelper::barrier();
+        ParallelSubSystemHelper::sync::barrier();
 
 //        int a = n + 1;
         fprintf(stderr, "New Round %d of %d \n RANDOM NUMBER == %llu\n", tick_count, MAX_TICK_COUNT, a);
@@ -164,7 +165,7 @@ int shor(uint_type n) {
 //        tmp->printNorm();
 //        return -1;
 //#endif
-        if (m_state == static_cast<state>(-1)) {
+        if (m_state == static_cast<state_t>(-1)) {
             std::fprintf(stderr, "Invalid Measurement\n");
             q_log("Invalid measurement")
             delete tmp;
@@ -178,7 +179,7 @@ int shor(uint_type n) {
         }
 
         //long double val = static_cast<double>(m_state) / static_cast<state>(1 << all_width);
-        fprintf(stderr, "MESVAL == %llu / %llu \n", m_state, static_cast<state>(1 << all_width));
+        fprintf(stderr, "MESVAL == %llu / %llu \n", m_state, static_cast<state_t>(1 << all_width));
         std::vector<cVariant> fracV = QMath::fracApprox(m_state, all_width, all_width);
         std::vector<uint_type> frac;
         for(size_t i = 0; i < fracV.size(); i++) {
@@ -193,7 +194,7 @@ int shor(uint_type n) {
             continue;
         }
         delete tmp;
-        uint_type del0 = QMath::gcd(static_cast<state>(a), frac[1] / 2) + 1;
+        uint_type del0 = QMath::gcd(static_cast<state_t>(a), frac[1] / 2) + 1;
 
         uint_type del1 = del0 - 2; // also == ipow(a, frac.second / 2) - 1;
         del0 = del0 % n;
@@ -318,9 +319,9 @@ int main(int argc, char *argv[])
         if (!sscanf(argv[1], "%d", &n)) {
             fprintf(stderr, "%s is not a number\n", argv[1]);
         } else {
-            ParallelSubSystemHelper::barrier();
+            ParallelSubSystemHelper::sync::barrier();
             shor(n);
-            ParallelSubSystemHelper::barrier();
+            ParallelSubSystemHelper::sync::barrier();
         }
         //test();
     }
@@ -359,7 +360,7 @@ uint_type measured_value;
 
 
 #endif
-        ParallelSubSystemHelper::barrier();
+        ParallelSubSystemHelper::sync::barrier();
 }
 void FindFactors(const cVariant & N_ ) {
  cVariant N= N_;

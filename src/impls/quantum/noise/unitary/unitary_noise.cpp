@@ -11,8 +11,8 @@ QMatrix UnitaryNoiseImpl::GenNoisyMatrix(const QMatrix &m)
     const double errorLevel = 0.1f;
     int width = m.getRowsCount();
     QMatrix res(width, width);
-    for (unsigned i = 0; i < static_cast<state>(width); i += 2) {
-        for (unsigned j = 0; j < static_cast<state>(width); j += 2) {
+    for (unsigned i = 0; i < static_cast<state_t>(width); i += 2) {
+        for (unsigned j = 0; j < static_cast<state_t>(width); j += 2) {
             if (i == j) {
                 long double val = errorLevel * xGenNRand();
                 res(i, j) = cos(val);

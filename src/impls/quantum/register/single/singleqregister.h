@@ -13,11 +13,13 @@ class SingleQRegister : public IQRegister {
     size_t m_alloc_width;
     representation_t m_representation;
 public:
-    SingleQRegister(int width, state startState, const mcomplex &Wamplitude = 1.0,
+    SingleQRegister(int width, state_t startState, const mcomplex &Wamplitude = 1.0,
                     representation_t mode = REG_REPRESENTATION);
 
     size_t getWidth() const;
     std::vector<mcomplex> & getStates();
+    const std::vector<mcomplex> & getStates() const;
+
     void setStates(const std::vector<mcomplex> &v);
     size_t getStatesSize() const;
     void allocSharedMem(int width);

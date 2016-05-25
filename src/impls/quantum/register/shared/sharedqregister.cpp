@@ -4,7 +4,7 @@
 #include <assert.h>
 
 
-SharedSimpleQRegister::SharedSimpleQRegister(int width, state startState, const mcomplex &amplitude, representation_t mode):
+SharedSimpleQRegister::SharedSimpleQRegister(int width, state_t startState, const mcomplex &amplitude, representation_t mode):
     m_representation(mode),
     m_global_width(width)
 {
@@ -14,7 +14,7 @@ SharedSimpleQRegister::SharedSimpleQRegister(int width, state startState, const 
     }
 
     m_cfg = ParallelSubSystemHelper::getConfig();
-    m_localstates.resize(static_cast<state>(1 << m_global_width) / m_cfg.size);
+    m_localstates.resize(static_cast<state_t>(1 << m_global_width) / m_cfg.size);
     m_local_size = m_localstates.size();
     m_local_offset = m_cfg.rank *  m_localstates.size();
     if (startState >= m_local_offset
@@ -38,6 +38,10 @@ size_t SharedSimpleQRegister::getWidth() const {
 }
 
 std::vector<mcomplex> & SharedSimpleQRegister::getStates() {
+    return m_localstates;
+}
+
+const std::vector<mcomplex> & SharedSimpleQRegister::getStates() const {
     return m_localstates;
 }
 
@@ -72,7 +76,7 @@ size_t SharedSimpleQRegister::getOffset() const {
 void SharedSimpleQRegister::allocSharedMem(int width) {
     uint_type width_p = width * ((m_representation == REG_REPRESENTATION) ? 1 : 2);
     m_global_width += width_p;
-    m_localstates.resize(static_cast<state>(1 << m_global_width) / m_cfg.size);
+    m_localstates.resize(static_cast<state_t>(1 << m_global_width) / m_cfg.size);
     for (int i = m_localstates.size() - 1; i >= 0; i--) {
         //state curr_state = i + m_local_offset;
         if (i && std::abs(m_localstates[i]) > g_eps) {
@@ -87,7 +91,7 @@ void SharedSimpleQRegister::allocSharedMem(int width) {
 std::vector<mcomplex> SharedSimpleQRegister::getAllReg() const {
     std::vector<mcomplex> fullReg; fullReg.resize(1);
     if (!ParallelSubSystemHelper::getConfig().rank) {
-        fullReg.resize(static_cast<state>(1 << m_global_width));
+        fullReg.resize(static_cast<state_t>(1 << m_global_width));
     }
     //MPI_Barrier(MPI_COMM_WORLD);
     //    if (ParallelSubSystemHelper::getConfig().rank == 1) {
@@ -97,14 +101,14 @@ std::vector<mcomplex> SharedSimpleQRegister::getAllReg() const {
 
     std::vector<mcomplex> local_copy = m_localstates;
     MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Gather(&local_copy[0],
+    MPI_SAFE_CALL(MPI_Gather(&local_copy[0],
             m_localstates.size(),
             MPI_DOUBLE_COMPLEX,
             &fullReg[0],
             m_localstates.size(),
             MPI_DOUBLE_COMPLEX,
             0,
-            MPI_COMM_WORLD);
+            MPI_COMM_WORLD));
     MPI_Barrier(MPI_COMM_WORLD);
     return fullReg;
 }
@@ -114,8 +118,8 @@ void SharedSimpleQRegister::print() const{
     if (!ParallelSubSystemHelper::getConfig().rank)
     {
         fprintf(stderr, "PP11\n");
-        state m_sz = fullReg.size();
-        for(state i = 0; i < m_sz; i++)
+        state_t m_sz = fullReg.size();
+        for(state_t i = 0; i < m_sz; i++)
         {
 //                    if (std::abs(fullReg[i]) < g_eps) {
 //                        continue;
@@ -128,7 +132,7 @@ void SharedSimpleQRegister::print() const{
             {
                 if(j % 4 == 3)
                     fprintf(stderr, " ");
-                fprintf(stderr, "%i", (static_cast<state>((1 << j) & i) > 0));
+                fprintf(stderr, "%i", (static_cast<state_t>((1 << j) & i) > 0));
             }
 
             fprintf(stderr, ">)\n");
@@ -141,7 +145,7 @@ void SharedSimpleQRegister::print() const{
 double SharedSimpleQRegister::getLocalNorm() const {
     double sum = 0.0;
     size_t m_sz = m_localstates.size();
-    for (state i = 0; i < m_sz; i++) {
+    for (state_t i = 0; i < m_sz; i++) {
         sum += std::abs(m_localstates[i]) * std::abs(m_localstates[i]);
     }
     return sum;
@@ -151,7 +155,7 @@ void SharedSimpleQRegister::printNorm() const {
     //std::vector<mcomplex> fullReg = getAllReg();
     double localNorm = getLocalNorm();
     double globalNorm = 0.0;
-    MPI_Reduce(&localNorm, &globalNorm, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_SAFE_CALL(MPI_Reduce(&localNorm, &globalNorm, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD));
     if (!ParallelSubSystemHelper::getConfig().rank) {
         fprintf(stderr, "NORM == %.8lf\n", globalNorm);
     }
@@ -166,11 +170,11 @@ void SharedSimpleQRegister::collapseState(int id, long double amplProb) {
     long double sum = 0.0f;
     size_t size = 0;
     bool flag = std::abs(amplProb) < g_eps;
-    state m_sz = m_localstates.size();
-    for (state i = 0; i < m_sz; i++) {
+    state_t m_sz = m_localstates.size();
+    for (state_t i = 0; i < m_sz; i++) {
         if (std::abs(m_localstates[i]) > g_eps) {
-            state st = i + m_local_offset;
-            int state_id1 = ((st & (state)(1 << id)) != 0);
+            state_t st = i + m_local_offset;
+            int state_id1 = ((st & (state_t)(1 << id)) != 0);
             if (state_id1 == !flag) {
                 mcomplex p = m_localstates[i];
                 size++;
@@ -180,35 +184,35 @@ void SharedSimpleQRegister::collapseState(int id, long double amplProb) {
     }
 
 
-    std::vector<state> new_st;
+    std::vector<state_t> new_st;
     std::vector<mcomplex> new_ampls;
     new_st.resize(size);
     new_ampls.resize(size);
     m_global_width = (m_global_width == 0) ? 0 : m_global_width - 1;
     long double gsum = 0;
-    MPI_Allreduce(&sum, &gsum, 1, MPI_LONG_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_SAFE_CALL(MPI_Allreduce(&sum, &gsum, 1, MPI_LONG_DOUBLE, MPI_SUM, MPI_COMM_WORLD));
     sum = gsum;
-    state right_mask = 0, left_mask = 0;
+    state_t right_mask = 0, left_mask = 0;
     for (int j = 0; j < id; j++) {
-        right_mask |= static_cast<state>(1 << j);
+        right_mask |= static_cast<state_t>(1 << j);
     }
 
-    for (int j = sizeof(state) * 8 - 1; j > id; j--) {
-        left_mask |= static_cast<state>(1 << j);
+    for (int j = sizeof(state_t) * 8 - 1; j > id; j--) {
+        left_mask |= static_cast<state_t>(1 << j);
     }
 
     int cnt = 0;
     //const int drank = 2;
 
-    for(state i = 0; i < m_sz; i++)
+    for(state_t i = 0; i < m_sz; i++)
     {
         if (std::abs(m_localstates[i]) > g_eps) {
-            state st = i + m_local_offset;
-            int state_id1 = ((st & (state)(1 << id)) != 0);
+            state_t st = i + m_local_offset;
+            int state_id1 = ((st & (state_t)(1 << id)) != 0);
             if(state_id1 == !flag)
             {
-                state right_part = 0;
-                state left_part = 0;
+                state_t right_part = 0;
+                state_t left_part = 0;
                 mcomplex amplitude = m_localstates[i];
 
                 left_part = st & left_mask;

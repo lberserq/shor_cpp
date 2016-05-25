@@ -15,7 +15,7 @@ void OMPGatesImpl::ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
     std::set<int> m_s; m_s.insert(id0); log_str(m_s);
 #endif
     std::vector<mcomplex> ampls(reg.getStates().size(), 0);
-    state st_sz = reg.getStatesSize();
+    state_t st_sz = reg.getStatesSize();
     int local_id0 = id0;
     int alpha = (reg.getRepresentation() == REG_REPRESENTATION) ? 1 : 2;
     if (local_id0 >= alpha * static_cast<int>(reg.getWidth())) {
@@ -23,7 +23,7 @@ void OMPGatesImpl::ApplyQbitMatrix(const QMatrix &m, IQRegister &reg, int id0)
     }
 
 #pragma omp parallel for schedule(static)
-    for (state i = 0; i < st_sz; i++) {
+    for (state_t i = 0; i < st_sz; i++) {
         int s_id = get_bit(i, local_id0);
         ampls[i] = resm(s_id, 0) * reg.getStates()[set_bit(i, id0, 0)] + resm(s_id, 1) * reg.getStates()[set_bit(i, id0, 1)];
     }
@@ -46,7 +46,7 @@ void OMPGatesImpl::ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0,
 #endif
 
     std::vector<mcomplex> ampls(reg.getStates().size(), 0);
-    state st_sz = reg.getStatesSize();
+    state_t st_sz = reg.getStatesSize();
     int local_id0 = id0;
     int local_id1 = id1;
 
@@ -57,7 +57,7 @@ void OMPGatesImpl::ApplyDiQbitMatrix(const QMatrix &m, IQRegister &reg, int id0,
     }
 
 #pragma omp parallel for schedule(static)
-    for (state i = 0; i < st_sz; i++) {
+    for (state_t i = 0; i < st_sz; i++) {
         int id_curr0 = get_bit(i, local_id0);
         int id_curr1 = get_bit(i, local_id1);
         mcomplex ampl = 0.0f;
@@ -87,7 +87,7 @@ void OMPGatesImpl::ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0
 #endif
 
     std::vector<mcomplex> ampls(reg.getStates().size(), 0);
-    state st_sz = reg.getStatesSize();
+    state_t st_sz = reg.getStatesSize();
     int local_id0 = id0;
     int local_id1 = id1;
     int local_id2 = id2;
@@ -100,7 +100,7 @@ void OMPGatesImpl::ApplyTriQbitMatrix(const QMatrix &m, IQRegister &reg, int id0
     }
 
 #pragma omp parallel for schedule(static)
-    for (state i = 0; i < st_sz; i++) {
+    for (state_t i = 0; i < st_sz; i++) {
         int id_curr0 = get_bit(i, local_id0);
         int id_curr1 = get_bit(i, local_id1);
         int id_curr2 = get_bit(i, local_id2);

@@ -4,6 +4,9 @@
 #include <common/infra/impls_lists/quantum_noise.h>
 #include <common/infra/impls_lists/quantum_register.h>
 #include <common/infra/impls_lists/common_world.h>
+#include <common/infra/impls_lists/infra_perfcounter.h>
+#include <common/infra/impls_lists/infra_serializer.h>
+
 
 #endif // COMMON_IMPL_H
 

@@ -89,7 +89,7 @@ std::vector<std::pair<QMatrix, std::vector<uint_type> > > XmlParser::GetOperator
         }
     }
 
-    ParallelSubSystemHelper::barrier();
+    ParallelSubSystemHelper::sync::barrier();
     return resV;
 }
 

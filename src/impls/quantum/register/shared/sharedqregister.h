@@ -18,11 +18,13 @@ class SharedSimpleQRegister : public IQRegister {
     ParallelSubSystemHelper::mpicfg m_cfg;
 
 public:
-    SharedSimpleQRegister(int width, state startState,
+    SharedSimpleQRegister(int width, state_t startState,
                            const mcomplex &amplitude = 1.0,
                            representation_t mode = REG_REPRESENTATION);
     size_t getWidth() const;
     std::vector<mcomplex> & getStates();
+    const std::vector<mcomplex> & getStates() const;
+
     void setStates(const std::vector<mcomplex> &v);
     size_t getStatesSize() const;
     void allocSharedMem(int width);
